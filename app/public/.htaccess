@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# Base si nécessaire
+RewriteBase /
+
+# Ne pas réécrire les fichiers existants (css, js, images)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Tout le reste passe par index.php
+RewriteRule ^ index.php [QSA,L]

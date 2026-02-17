@@ -1,0 +1,43 @@
+<?php
+
+spl_autoload_register(function (string $class) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Namespace racine du projet
+    |--------------------------------------------------------------------------
+    */
+    $projectRoot = dirname(__DIR__) . '/';
+
+    /*
+    |--------------------------------------------------------------------------
+    | On ignore les classes externes (ex: PDO, Exception, etc.)
+    |--------------------------------------------------------------------------
+    */
+    if (str_starts_with($class, 'PDO') ||
+        str_starts_with($class, 'Exception') ||
+        str_starts_with($class, 'Throwable')) {
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversion namespace → chemin fichier
+    |--------------------------------------------------------------------------
+    | Controllers\UserController
+    | → Controllers/UserController.php
+    |--------------------------------------------------------------------------
+    */
+    $relativePath = str_replace('\\', '/', $class) . '.php';
+
+    $file = $projectRoot . $relativePath;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chargement sécurisé
+    |--------------------------------------------------------------------------
+    */
+    if (is_file($file)) {
+        require_once $file;
+    }
+});
