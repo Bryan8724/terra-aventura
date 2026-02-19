@@ -1,0 +1,5 @@
+.env
+*.log
+php-error.log
+vendor/
+node_modules/
