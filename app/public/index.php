@@ -1,5 +1,8 @@
 <?php
 declare(strict_types=1);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 /*
 |--------------------------------------------------------------------------
@@ -79,25 +82,15 @@ set_exception_handler(function (Throwable $e) {
 });
 
 set_error_handler(function ($severity, $message, $file, $line) {
-
-    http_response_code(500);
-
-    $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
-
-    if (str_starts_with($uri, '/api/')) {
-
-        header('Content-Type: application/json');
-
-        echo json_encode([
-            'success' => false,
-            'message' => 'Erreur interne'
-        ]);
-
-        return;
-    }
-
-    echo 'Erreur interne.';
+    echo "<pre>";
+    echo "ERREUR PHP:\n";
+    echo $message . "\n";
+    echo "Fichier: " . $file . "\n";
+    echo "Ligne: " . $line . "\n";
+    echo "</pre>";
+    exit;
 });
+
 
 /*
 |--------------------------------------------------------------------------

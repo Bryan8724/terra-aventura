@@ -1,7 +1,11 @@
+version: "3.9"
+
 services:
+
   web:
     image: nginx:alpine
-    container_name: terra-aventura-web
+    container_name: terra-aventura-dev-web
+    restart: unless-stopped
     volumes:
       - ./:/var/www/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -12,37 +16,56 @@ services:
 
   php:
     build: ./php
-    container_name: terra-aventura-php
+    container_name: terra-aventura-dev-php
+    restart: unless-stopped
     volumes:
       - ./:/var/www/html
+      - /srv/scripts:/srv/scripts   # 🔥 Accès au script de déploiement
+    environment:
+      # Base de données DEV
+      DB_HOST: terra-aventura-dev-db
+      DB_NAME: terra_aventura
+      DB_USER: terra
+      DB_PASSWORD: terra
+      DB_CHARSET: utf8mb4
+
+      # Environnement
+      APP_ENV: dev
+    depends_on:
+      - db
     networks:
       - npm_net
 
   db:
     image: mariadb:10.11
-    container_name: terra-aventura-db
+    container_name: terra-aventura-dev-db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: terra_aventura
       MYSQL_USER: terra
       MYSQL_PASSWORD: terra
     volumes:
-      - terra-aventura-db-data:/var/lib/mysql
+      - terra-aventura-dev-db-data:/var/lib/mysql
     networks:
       - npm_net
 
   pma:
     image: phpmyadmin/phpmyadmin
-    container_name: terra-aventura-pma
+    container_name: terra-aventura-dev-pma
+    restart: unless-stopped
     environment:
-      PMA_HOST: terra-aventura-db
-      PMA_USER: suprem
-      PMA_PASSWORD: MOT_DE_PASSE_SUPREM
+      PMA_HOST: terra-aventura-dev-db
+      PMA_USER: terra
+      PMA_PASSWORD: terra
+      UPLOAD_LIMIT: 512M
+    depends_on:
+      - db
     networks:
       - npm_net
 
 volumes:
-  terra-aventura-db-data:
+  terra-aventura-dev-db-data:
 
 networks:
   npm_net:

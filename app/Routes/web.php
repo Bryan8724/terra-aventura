@@ -24,6 +24,13 @@ $router->post('/forgot-password', ['AuthController', 'forgotPassword']);
 
 
 /*
+| DÉPLOIEMENT (DEV UNIQUEMENT)
+*/
+$router->post('/deploy', ['DeployController', 'deploy']);
+$router->get('/deploy/log', ['DeployController', 'log']);
+
+
+/*
 | PARCOURS
 */
 $router->get('/parcours', ['ParcoursController', 'index']);

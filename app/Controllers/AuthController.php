@@ -23,14 +23,17 @@ class AuthController
     ========================= */
     public function login(): void
     {
-        $isApi = str_starts_with(
-            parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH),
-            '/api/'
-        );
+        // 🔐 Détection API SAFE (compatible PHP 8.3 + proxy)
+        $uri  = $_SERVER['REQUEST_URI'] ?? '';
+        $path = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
+        $isApi = str_starts_with($path, '/api/');
 
         $login    = trim($_POST['login'] ?? '');
         $password = $_POST['password'] ?? '';
 
+        /* =========================
+           VALIDATION
+        ========================= */
         if ($login === '' || $password === '') {
 
             if ($isApi) {
@@ -45,17 +48,24 @@ class AuthController
             return;
         }
 
+        /* =========================
+           RECHERCHE UTILISATEUR
+        ========================= */
         $pdo = Database::getInstance();
 
         $stmt = $pdo->prepare("
             SELECT *
             FROM users
-            WHERE (username = :login OR email = :login)
+            WHERE (username = :username OR email = :email)
               AND status = 'active'
             LIMIT 1
         ");
 
-        $stmt->execute(['login' => $login]);
+        $stmt->execute([
+            'username' => $login,
+            'email'    => $login
+        ]);
+
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password'])) {
@@ -72,11 +82,9 @@ class AuthController
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🔐 VERSION API → TOKEN
-        |--------------------------------------------------------------------------
-        */
+        /* =========================
+           🔐 VERSION API → TOKEN
+        ========================= */
         if ($isApi) {
 
             $token = ApiAuth::generateToken((int)$user['id']);
@@ -94,12 +102,11 @@ class AuthController
             ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🌐 VERSION WEB → SESSION
-        |--------------------------------------------------------------------------
-        */
+        /* =========================
+           🌐 VERSION WEB → SESSION
+        ========================= */
         Auth::login($user);
+
         header('Location: /');
         exit;
     }
@@ -109,10 +116,9 @@ class AuthController
     ========================= */
     public function logout(): void
     {
-        $isApi = str_starts_with(
-            parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH),
-            '/api/'
-        );
+        $uri  = $_SERVER['REQUEST_URI'] ?? '';
+        $path = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
+        $isApi = str_starts_with($path, '/api/');
 
         if ($isApi) {
 
@@ -125,6 +131,7 @@ class AuthController
         }
 
         Auth::logout();
+
         header('Location: /login');
         exit;
     }
