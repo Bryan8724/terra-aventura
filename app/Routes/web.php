@@ -11,8 +11,11 @@ use Core\Router;
 */
 
 /*
+|--------------------------------------------------------------------------
 | AUTH / DASHBOARD
+|--------------------------------------------------------------------------
 */
+
 $router->get('/', ['DashboardController', 'index']);
 
 $router->get('/login', ['AuthController', 'loginForm']);
@@ -24,15 +27,31 @@ $router->post('/forgot-password', ['AuthController', 'forgotPassword']);
 
 
 /*
+|--------------------------------------------------------------------------
 | DÉPLOIEMENT (DEV UNIQUEMENT)
+|--------------------------------------------------------------------------
 */
+
 $router->post('/deploy', ['DeployController', 'deploy']);
 $router->get('/deploy/log', ['DeployController', 'log']);
 
 
 /*
-| PARCOURS
+|--------------------------------------------------------------------------
+| DÉPLOIEMENT – STATUS (UTILISÉ PAR DEV POUR INTERROGER PROD)
+|--------------------------------------------------------------------------
+| ⚠️ Requiert DeployStatusController
 */
+
+$router->get('/deploy-status', ['DeployStatusController', 'index']);
+
+
+/*
+|--------------------------------------------------------------------------
+| PARCOURS
+|--------------------------------------------------------------------------
+*/
+
 $router->get('/parcours', ['ParcoursController', 'index']);
 $router->get('/parcours/create', ['ParcoursController', 'create']);
 $router->post('/parcours/store', ['ParcoursController', 'store']);
@@ -45,14 +64,20 @@ $router->get('/parcours/search', ['ParcoursController', 'search']);
 
 
 /*
+|--------------------------------------------------------------------------
 | QUÊTES UTILISATEUR
+|--------------------------------------------------------------------------
 */
+
 $router->get('/quetes', ['QueteController', 'index']);
 
 
 /*
+|--------------------------------------------------------------------------
 | QUÊTES ADMIN
+|--------------------------------------------------------------------------
 */
+
 $router->get('/admin/quetes', ['AdminQueteController', 'index']);
 $router->get('/admin/quetes/create', ['AdminQueteController', 'create']);
 $router->post('/admin/quetes/store', ['AdminQueteController', 'store']);
@@ -63,8 +88,11 @@ $router->get('/admin/quetes/search-parcours', ['AdminQueteController', 'searchPa
 
 
 /*
+|--------------------------------------------------------------------------
 | POIZ
+|--------------------------------------------------------------------------
 */
+
 $router->get('/poiz', ['PoizController', 'index']);
 $router->get('/poiz/create', ['PoizController', 'create']);
 $router->post('/poiz/store', ['PoizController', 'store']);
@@ -74,15 +102,21 @@ $router->post('/poiz/delete', ['PoizController', 'delete']);
 
 
 /*
+|--------------------------------------------------------------------------
 | ADMIN – MESSAGES
+|--------------------------------------------------------------------------
 */
+
 $router->get('/admin/messages', ['AdminMessageController', 'index']);
 $router->post('/admin/messages/process', ['AdminMessageController', 'process']);
 
 
 /*
+|--------------------------------------------------------------------------
 | ADMIN – USERS
+|--------------------------------------------------------------------------
 */
+
 $router->get('/admin/users', ['AdminUserController', 'index']);
 $router->get('/admin/users/create', ['AdminUserController', 'create']);
 $router->post('/admin/users/store', ['AdminUserController', 'store']);
@@ -92,15 +126,21 @@ $router->post('/admin/users/delete', ['AdminUserController', 'delete']);
 
 
 /*
+|--------------------------------------------------------------------------
 | USER PROFILE
+|--------------------------------------------------------------------------
 */
+
 $router->get('/user/profile', ['UserController', 'editProfile']);
 $router->post('/user/update-profile', ['UserUpdateProfileController', 'index']);
 
 
 /*
+|--------------------------------------------------------------------------
 | MAINTENANCE
+|--------------------------------------------------------------------------
 */
+
 $router->get('/maintenance', ['MaintenanceController', 'index']);
 $router->get('/maintenance/ajaxParcours', ['MaintenanceController', 'ajaxParcours']);
 $router->get('/maintenance/ajaxHistoryDiff', ['MaintenanceController', 'ajaxHistoryDiff']);
