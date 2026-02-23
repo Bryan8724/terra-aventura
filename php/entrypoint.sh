@@ -7,7 +7,16 @@ chown -R www-data:www-data /var/www/html/app/Storage
 chmod -R 775 /var/www/html/app/Storage
 echo "[entrypoint] Permissions Storage OK"
 
-# ✅ Fix git "dubious ownership" au niveau système (tous les users)
+# ✅ SSH : copie la clé de root vers www-data pour le git push
+# (le volume monte /root/.ssh mais git exec() tourne en www-data)
+if [ -d /root/.ssh ]; then
+    mkdir -p /var/www/.ssh
+    cp -r /root/.ssh/. /var/www/.ssh/
+    chown -R www-data:www-data /var/www/.ssh
+    chmod 700 /var/www/.ssh
+    chmod 600 /var/www/.ssh/* 2>/dev/null || true
+    echo "[entrypoint] SSH config www-data OK"
+fi
 git config --system --add safe.directory /var/www/html
 # ✅ Identité git pour les commits (nécessaire car www-data n'a pas de config ~/.gitconfig)
 git config --system user.email "deploy@terra-aventura"
