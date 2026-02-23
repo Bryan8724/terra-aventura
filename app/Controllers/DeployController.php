@@ -75,7 +75,9 @@ class DeployController
 
         $gitCommands = [
             "git -C " . escapeshellarg($projectRoot) . " checkout main 2>&1",
-            "git -C " . escapeshellarg($projectRoot) . " add -A 2>&1",
+            // ✅ Exclure docker-compose.yml et .env → spécifiques à chaque environnement
+            //    sans ça, le push écrase la config prod avec celle de dev
+            "git -C " . escapeshellarg($projectRoot) . " add -A -- ':!docker-compose.yml' ':!.env' ':!.env.*' 2>&1",
             // --allow-empty : ne plante pas s'il n'y a rien de nouveau à commiter
             "git -C " . escapeshellarg($projectRoot) . " commit --allow-empty -m " . escapeshellarg($commitMsg) . " 2>&1",
             "git -C " . escapeshellarg($projectRoot) . " push origin main 2>&1",

@@ -3,3 +3,4 @@
 php-error.log
 vendor/
 node_modules/
+docker-compose.yml
