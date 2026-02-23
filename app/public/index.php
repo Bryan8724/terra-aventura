@@ -1,14 +1,36 @@
 <?php
 declare(strict_types=1);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 /*
 |--------------------------------------------------------------------------
-| Détection HTTPS réelle (proxy compatible)
+| ENVIRONMENT
 |--------------------------------------------------------------------------
 */
+
+$env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
+
+/*
+|--------------------------------------------------------------------------
+| DEBUG MODE (DEV ONLY)
+|--------------------------------------------------------------------------
+*/
+
+if ($env === 'dev') {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
+} else {
+    ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
+    error_reporting(0);
+}
+
+/*
+|--------------------------------------------------------------------------
+| HTTPS DETECTION (PROXY SAFE)
+|--------------------------------------------------------------------------
+*/
+
 $isHttps =
     (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || ($_SERVER['SERVER_PORT'] ?? null) == 443
@@ -17,86 +39,112 @@ $isHttps =
 
 /*
 |--------------------------------------------------------------------------
-| Configuration Session Sécurisée
+| SESSION CONFIG
 |--------------------------------------------------------------------------
 */
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/',
-    'domain'   => '',
-    'secure'   => $isHttps,
-    'httponly' => true,
-    'samesite' => $isHttps ? 'None' : 'Lax',
-]);
 
 if (session_status() === PHP_SESSION_NONE) {
+
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,
+        'httponly' => true,
+        'samesite' => $isHttps ? 'None' : 'Lax',
+    ]);
+
     session_start();
 }
 
 /*
 |--------------------------------------------------------------------------
-| Timezone
+| TIMEZONE
 |--------------------------------------------------------------------------
 */
+
 date_default_timezone_set('Europe/Paris');
 
 /*
 |--------------------------------------------------------------------------
-| Constantes globales
+| ROOT PATH
 |--------------------------------------------------------------------------
 */
+
 define('ROOT_PATH', dirname(__DIR__));
 
 /*
 |--------------------------------------------------------------------------
-| Chargement Config & Autoloader
+| LOAD CONFIG + AUTOLOADER
 |--------------------------------------------------------------------------
 */
+
 require_once ROOT_PATH . '/Config/app.php';
 require_once ROOT_PATH . '/Core/Autoloader.php';
 
 /*
 |--------------------------------------------------------------------------
-| Gestion erreurs globale (Web + API)
+| GLOBAL ERROR HANDLING
 |--------------------------------------------------------------------------
 */
-set_exception_handler(function (Throwable $e) {
+
+set_error_handler(function ($severity, $message, $file, $line) use ($env) {
+
+    // ✅ Respecter l'opérateur @ (suppression d'erreurs)
+    if (error_reporting() === 0) {
+        return false;
+    }
+
+    if ($env === 'dev') {
+        echo "<pre style='background:#111;color:#ff6b6b;padding:20px'>";
+        echo "⚠ PHP ERROR\n\n";
+        echo "Message : " . $message . "\n\n";
+        echo "File    : " . $file . "\n";
+        echo "Line    : " . $line . "\n";
+        echo "</pre>";
+        exit;
+    }
+
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+set_exception_handler(function (Throwable $e) use ($env) {
 
     http_response_code(500);
 
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 
+    if ($env === 'dev') {
+
+        echo "<pre style='background:#111;color:#ff6b6b;padding:20px'>";
+        echo "💥 EXCEPTION\n\n";
+        echo "Message : " . $e->getMessage() . "\n\n";
+        echo "File    : " . $e->getFile() . "\n";
+        echo "Line    : " . $e->getLine() . "\n\n";
+        echo "Trace :\n" . $e->getTraceAsString();
+        echo "</pre>";
+        exit;
+    }
+
     if (str_starts_with($uri, '/api/')) {
-
         header('Content-Type: application/json');
-
         echo json_encode([
             'success' => false,
             'message' => 'Erreur serveur'
         ]);
-
-        return;
+        exit;
     }
 
     echo 'Une erreur est survenue.';
-});
-
-set_error_handler(function ($severity, $message, $file, $line) {
-    echo "<pre>";
-    echo "ERREUR PHP:\n";
-    echo $message . "\n";
-    echo "Fichier: " . $file . "\n";
-    echo "Ligne: " . $line . "\n";
-    echo "</pre>";
     exit;
 });
 
-
 /*
 |--------------------------------------------------------------------------
-| Initialisation DB & Router
+| INIT DB + ROUTER
 |--------------------------------------------------------------------------
 */
+
 use Core\Database;
 use Core\Router;
 
@@ -105,14 +153,16 @@ $router = new Router($db);
 
 /*
 |--------------------------------------------------------------------------
-| Chargement Routes
+| LOAD ROUTES
 |--------------------------------------------------------------------------
 */
+
 require_once ROOT_PATH . '/Routes/web.php';
 
 /*
 |--------------------------------------------------------------------------
-| Dispatch
+| DISPATCH
 |--------------------------------------------------------------------------
 */
+
 $router->dispatch();

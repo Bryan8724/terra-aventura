@@ -4,30 +4,25 @@ namespace Controllers;
 
 class DeployStatusController
 {
+    private string $statusFile = '/srv/scripts/deploy-status.json';
+
     public function index(): void
     {
-        $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? '';
-
-        if ($appEnv !== 'prod') {
+        // DEV uniquement
+        if (getenv('APP_ENV') !== 'dev') {
             http_response_code(404);
             return;
         }
 
-        $token = $_GET['token'] ?? '';
-        $expectedToken = 'MON_TOKEN_SUPER_SECRET_LONG_ET_COMPLEXE';
-
-        if ($token !== $expectedToken) {
+        // Admin uniquement
+        if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
             http_response_code(403);
-            echo json_encode(['error' => 'Unauthorized']);
             return;
         }
 
-        header("Access-Control-Allow-Origin: https://dev.terra.bryanmargot19210.fr");
-        header("Content-Type: application/json");
+        header('Content-Type: application/json');
 
-        $statusFile = '/srv/scripts/deploy-status.json';
-
-        if (!file_exists($statusFile)) {
+        if (!file_exists($this->statusFile)) {
             echo json_encode([
                 'status' => 'idle',
                 'progress' => 0
@@ -35,6 +30,16 @@ class DeployStatusController
             return;
         }
 
-        readfile($statusFile);
+        $content = file_get_contents($this->statusFile);
+
+        if (!$content) {
+            echo json_encode([
+                'status' => 'idle',
+                'progress' => 0
+            ]);
+            return;
+        }
+
+        echo $content;
     }
 }

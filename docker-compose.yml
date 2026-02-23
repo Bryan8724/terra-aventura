@@ -21,6 +21,9 @@ services:
     volumes:
       - ./:/var/www/html
       - /srv/scripts:/srv/scripts   # 🔥 Accès au script de déploiement
+      # 🔑 Clé SSH + config git de l'hôte → permet le git push depuis le container
+      - /root/.ssh:/root/.ssh:ro
+      - /root/.gitconfig:/root/.gitconfig:ro
     environment:
       # Base de données DEV
       DB_HOST: terra-aventura-dev-db

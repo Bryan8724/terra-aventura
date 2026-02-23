@@ -7,6 +7,9 @@ $user = $_SESSION['user'] ?? null;
 $username = $user['username'] ?? '';
 $isAdmin  = ($user['role'] ?? '') === 'admin';
 
+$env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
+$isDev = $env !== 'prod';
+
 $path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
 
 /*
@@ -160,10 +163,19 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
         <header class="bg-white border-b shadow-sm sticky top-0 z-30">
             <div class="h-14 px-4 flex items-center justify-between max-w-7xl mx-auto">
 
-                <button class="md:hidden text-xl" onclick="toggleSidebar()">☰</button>
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden text-xl" onclick="toggleSidebar()">☰</button>
+
+                    <?php if ($isDev): ?>
+                        <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider
+                                     bg-red-600 text-white rounded-full shadow">
+                            ⚠ ENVIRONNEMENT DEV
+                        </span>
+                    <?php endif; ?>
+                </div>
 
                 <?php if ($user): ?>
-                <div class="flex gap-4 text-sm">
+                <div class="flex gap-4 text-sm items-center">
                     <span><?= htmlspecialchars($username) ?></span>
                     <a href="/logout" class="text-red-600 hover:underline">
                         Déconnexion

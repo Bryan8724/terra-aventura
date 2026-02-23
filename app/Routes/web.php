@@ -40,10 +40,21 @@ $router->get('/deploy/log', ['DeployController', 'log']);
 |--------------------------------------------------------------------------
 | DÉPLOIEMENT – STATUS (UTILISÉ PAR DEV POUR INTERROGER PROD)
 |--------------------------------------------------------------------------
-| ⚠️ Requiert DeployStatusController
 */
 
 $router->get('/deploy-status', ['DeployStatusController', 'index']);
+
+
+/*
+|--------------------------------------------------------------------------
+| BACKUP DEV (ADMIN + DEV UNIQUEMENT)
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/admin/dev-backup', ['DevController', 'index']);
+$router->post('/admin/dev-backup/start', ['DevController', 'start']);
+$router->get('/admin/dev-backup/progress', ['DevController', 'progress']);
+$router->get('/admin/dev-backup/download', ['DevController', 'download']);
 
 
 /*
