@@ -15,12 +15,16 @@ class Poiz
 
     public function getAll(bool $onlyActive = true): array
     {
-        $sql = "SELECT * FROM poiz";
-        if ($onlyActive) {
-            $sql .= " WHERE actif = 1";
-        }
-        $sql .= " ORDER BY nom ASC";
-
+        $where = $onlyActive ? "WHERE p.actif = 1" : "";
+        $sql = "
+            SELECT p.*,
+                   COUNT(pa.id) AS nb_parcours
+            FROM poiz p
+            LEFT JOIN parcours pa ON pa.poiz_id = p.id
+            $where
+            GROUP BY p.id
+            ORDER BY p.nom ASC
+        ";
         return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 

@@ -5,6 +5,8 @@ namespace Controllers;
 use Core\Auth;
 use Core\Response;
 use Core\ApiAuth;
+use Core\Database;
+use PDO;
 
 class DashboardController
 {
@@ -15,15 +17,8 @@ class DashboardController
             '/api/'
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🔐 VERSION API → TOKEN
-        |--------------------------------------------------------------------------
-        */
         if ($isApi) {
-
             $user = ApiAuth::requireAuth();
-
             Response::json([
                 'success' => true,
                 'message' => 'Dashboard chargé',
@@ -38,12 +33,18 @@ class DashboardController
             ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🌐 VERSION WEB → SESSION
-        |--------------------------------------------------------------------------
-        */
         Auth::check();
+
+        $db     = Database::getInstance();
+        $userId = (int)$_SESSION['user']['id'];
+
+        // Compteurs dashboard
+        $totalParcours = (int)$db->query("SELECT COUNT(*) FROM parcours")->fetchColumn();
+        $totalPoiz     = (int)$db->query("SELECT COUNT(*) FROM poiz")->fetchColumn();
+
+        $stmtEff = $db->prepare("SELECT COUNT(*) FROM parcours_effectues WHERE user_id = ?");
+        $stmtEff->execute([$userId]);
+        $effectues = (int)$stmtEff->fetchColumn();
 
         require VIEW_PATH . '/dashboard/index.php';
     }

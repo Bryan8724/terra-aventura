@@ -20,6 +20,22 @@ class Maintenance
     ========================================================= */
 
     /**
+     * ✅ FIX : méthode utilisée dans ParcoursController::valider() mais absente
+     * Vérifie si un parcours est actuellement en maintenance
+     */
+    public function isInMaintenance(int $parcoursId): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT 1
+            FROM parcours_maintenance
+            WHERE parcours_id = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$parcoursId]);
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
      * 🔢 Nombre total de parcours en maintenance
      */
     public function countParcours(): int

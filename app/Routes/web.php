@@ -72,6 +72,7 @@ $router->post('/parcours/delete', ['ParcoursController', 'delete']);
 $router->post('/parcours/valider', ['ParcoursController', 'valider']);
 $router->post('/parcours/reset', ['ParcoursController', 'reset']);
 $router->get('/parcours/search', ['ParcoursController', 'search']);
+$router->get('/parcours/effectue', ['ParcoursController', 'effectue']); // ✅ FIX : route manquante
 
 
 /*

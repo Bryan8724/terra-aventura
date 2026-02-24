@@ -81,8 +81,9 @@ class ParcoursController
             exit;
         }
 
-        $poiz  = $this->poiz->getAll();
-        $title = 'Parcours';
+        $poiz         = $this->poiz->getAll();
+        $departements = $this->departementsNouvelleAquitaine(); // ✅ FIX : manquait dans la vue
+        $title        = 'Parcours';
 
         ob_start();
         require VIEW_PATH . '/parcours/index.php';
@@ -271,7 +272,7 @@ class ParcoursController
     }
 
     /* =========================================================
-       DEPARTEMENTS
+       DÉPARTEMENT (HELPER)
     ========================================================= */
     private function departementsNouvelleAquitaine(): array
     {
@@ -289,5 +290,191 @@ class ParcoursController
             '86' => 'Vienne',
             '87' => 'Haute-Vienne'
         ];
+    }
+
+    /* =========================================================
+       DÉTAIL PARCOURS EFFECTUÉ
+    ========================================================= */
+    public function effectue(): void
+    {
+        Auth::check();
+        $userId     = (int)$_SESSION['user']['id'];
+        $parcoursId = (int)($_GET['id'] ?? 0);
+
+        if ($parcoursId === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $data = $this->parcours->getEffectueDetail($userId, $parcoursId);
+
+        if (!$data) {
+            Toast::add('error', 'Vous n\'avez pas encore effectué ce parcours');
+            header('Location: /parcours');
+            exit;
+        }
+
+        // ✅ FIX : tables réelles = quete_objet_parcours + quete_objets (via quete_objet_id)
+        $stmt = $this->db->prepare("
+            SELECT qo.nom,
+                   (
+                       SELECT COUNT(*)
+                       FROM quete_objet_parcours qop2
+                       INNER JOIN parcours_effectues pe2
+                           ON pe2.parcours_id = qop2.parcours_id
+                          AND pe2.user_id = :uid2
+                       WHERE qop2.quete_objet_id = qop.quete_objet_id
+                   ) AS total_obtenus
+            FROM quete_objet_parcours qop
+            INNER JOIN quete_objets qo ON qo.id = qop.quete_objet_id
+            WHERE qop.parcours_id = :pid
+            LIMIT 1
+        ");
+
+        $stmt->execute([':uid2' => $userId, ':pid' => $parcoursId]);
+        $objet = $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+
+        $dernierParcours = $objet && (int)$objet['total_obtenus'] === 1;
+
+        $title = 'Parcours effectué';
+        ob_start();
+        require VIEW_PATH . '/parcours/effectue.php';
+        $content = ob_get_clean();
+        require VIEW_PATH . '/partials/layout.php';
+    }
+
+    /* =========================================================
+       CRÉATION PARCOURS (ADMIN)
+    ========================================================= */
+    public function create(): void
+    {
+        AdminMiddleware::handle();
+
+        $departements = $this->departementsNouvelleAquitaine();
+        $poiz         = $this->poiz->getAll();
+        $title        = 'Ajouter un parcours';
+
+        ob_start();
+        require VIEW_PATH . '/parcours/create.php';
+        $content = ob_get_clean();
+        require VIEW_PATH . '/partials/layout.php';
+    }
+
+    /* =========================================================
+       ENREGISTREMENT PARCOURS (ADMIN)
+    ========================================================= */
+    public function store(): void
+    {
+        AdminMiddleware::handle();
+
+        $this->parcours->create([
+            'poiz_id'          => (int)($_POST['poiz_id'] ?? 0),
+            'titre'            => trim($_POST['titre'] ?? ''),
+            'ville'            => trim($_POST['ville'] ?? ''),
+            'departement_code' => trim($_POST['departement_code'] ?? ''),
+            'departement_nom'  => trim($_POST['departement_nom'] ?? ''),
+            'niveau'           => (int)($_POST['niveau'] ?? 3),
+            'terrain'          => (int)($_POST['terrain'] ?? 3),
+            'duree'            => trim($_POST['duree'] ?? ''),
+            'distance_km'      => (float)($_POST['distance_km'] ?? 0),
+        ]);
+
+        Toast::add('success', 'Parcours créé avec succès');
+        header('Location: /parcours');
+        exit;
+    }
+
+    /* =========================================================
+       FORMULAIRE ÉDITION (ADMIN)
+    ========================================================= */
+    public function edit(): void
+    {
+        AdminMiddleware::handle();
+
+        $id = (int)($_GET['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $parcours = $this->parcours->find($id);
+
+        if (!$parcours) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $departements = $this->departementsNouvelleAquitaine();
+        $poiz         = $this->poiz->getAll();
+        $title        = 'Modifier le parcours';
+
+        ob_start();
+        require VIEW_PATH . '/parcours/edit.php';
+        $content = ob_get_clean();
+        require VIEW_PATH . '/partials/layout.php';
+    }
+
+    /* =========================================================
+       MISE À JOUR PARCOURS (ADMIN)
+    ========================================================= */
+    public function update(): void
+    {
+        AdminMiddleware::handle();
+
+        $id = (int)($_POST['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $this->parcours->update($id, [
+            'poiz_id'          => (int)($_POST['poiz_id'] ?? 0),
+            'titre'            => trim($_POST['titre'] ?? ''),
+            'ville'            => trim($_POST['ville'] ?? ''),
+            'departement_code' => trim($_POST['departement_code'] ?? ''),
+            'departement_nom'  => trim($_POST['departement_nom'] ?? ''),
+            'niveau'           => (int)($_POST['niveau'] ?? 3),
+            'terrain'          => (int)($_POST['terrain'] ?? 3),
+            'duree'            => trim($_POST['duree'] ?? ''),
+            'distance_km'      => (float)($_POST['distance_km'] ?? 0),
+        ]);
+
+        Toast::add('success', 'Parcours mis à jour');
+        header('Location: /parcours');
+        exit;
+    }
+
+    /* =========================================================
+       SUPPRESSION PARCOURS (ADMIN)
+    ========================================================= */
+    public function delete(): void
+    {
+        AdminMiddleware::handle();
+
+        $id = (int)($_POST['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        if (!$this->parcours->canDelete($id)) {
+            Toast::add('error', 'Impossible de supprimer : ce parcours a été effectué par des utilisateurs');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $this->parcours->delete($id);
+
+        Toast::add('success', 'Parcours supprimé');
+        header('Location: /parcours');
+        exit;
     }
 }
