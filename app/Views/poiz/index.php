@@ -1,14 +1,6 @@
 <?php
 $user    = $_SESSION['user'] ?? null;
 $isAdmin = isset($user['role']) && $user['role'] === 'admin';
-
-// Grouper par thème
-$byTheme = [];
-foreach ($poiz as $p) {
-    $theme = $p['theme'] ?: 'Sans thème';
-    $byTheme[$theme][] = $p;
-}
-ksort($byTheme);
 ?>
 
 <style>
@@ -26,18 +18,15 @@ ksort($byTheme);
     width: 100%; aspect-ratio: 1/1;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    padding: 1.5rem;
-    position: relative; overflow: hidden;
+    padding: 1.5rem; position: relative; overflow: hidden;
 }
 .poiz-card-img img {
-    width: 100%; height: 100%;
-    object-fit: contain;
+    width: 100%; height: 100%; object-fit: contain;
     transition: transform .3s ease;
 }
 .poiz-card:hover .poiz-card-img img { transform: scale(1.06); }
 
 .poiz-card-body { padding: 1rem 1.1rem .9rem; flex: 1; display: flex; flex-direction: column; gap: .35rem; }
-
 .poiz-name { font-size: .95rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
 .poiz-theme {
     display: inline-flex; align-items: center; gap: .3rem;
@@ -68,31 +57,16 @@ ksort($byTheme);
     background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; cursor: not-allowed;
 }
 
-.theme-section-title {
-    font-size: .75rem; font-weight: 700; color: #94a3b8;
-    text-transform: uppercase; letter-spacing: .07em;
-    display: flex; align-items: center; gap: .5rem;
-    margin-bottom: .9rem; padding-bottom: .5rem;
-    border-bottom: 1px solid #f1f5f9;
-}
-.theme-count-badge {
-    padding: .1rem .5rem; border-radius: 9999px;
-    background: #f1f5f9; color: #64748b;
-    font-size: .68rem; font-weight: 600;
-}
-
-/* Recherche */
-.search-wrapper { position: relative; }
-.search-wrapper svg { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-#poizSearch { padding-left: 2.5rem; transition: border-color .2s, box-shadow .2s; }
-#poizSearch:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); outline: none; }
-
-/* Inactive badge */
 .inactive-badge {
     position: absolute; top: .6rem; right: .6rem;
     font-size: .65rem; font-weight: 700; padding: .15rem .5rem;
     background: rgba(0,0,0,.55); color: #fff; border-radius: 9999px;
 }
+
+.search-wrapper { position: relative; }
+.search-wrapper svg { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+#poizSearch { padding-left: 2.5rem; transition: border-color .2s, box-shadow .2s; }
+#poizSearch:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); outline: none; }
 </style>
 
 <!-- Header -->
@@ -102,7 +76,6 @@ ksort($byTheme);
         <p class="text-sm text-gray-400 mt-0.5"><?= count($poiz) ?> personnage<?= count($poiz) > 1 ? 's' : '' ?> disponible<?= count($poiz) > 1 ? 's' : '' ?></p>
     </div>
     <div class="flex items-center gap-3">
-        <!-- Recherche -->
         <div class="search-wrapper">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" id="poizSearch" placeholder="Rechercher un POIZ…"
@@ -124,44 +97,63 @@ ksort($byTheme);
     </div>
 <?php else: ?>
 
-    <?php if (count($byTheme) > 1): ?>
-        <!-- Vue par thème -->
-        <?php foreach ($byTheme as $theme => $items): ?>
-            <div class="mb-8 poiz-theme-group" data-theme="<?= htmlspecialchars(strtolower($theme)) ?>">
-                <div class="theme-section-title">
-                    <span><?= htmlspecialchars($theme) ?></span>
-                    <span class="theme-count-badge"><?= count($items) ?></span>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                    <?php foreach ($items as $p): ?>
-                        <?php include __DIR__ . '/_card.php'; ?>
-                    <?php endforeach; ?>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4" id="poizGrid">
+        <?php foreach ($poiz as $p):
+            $nbParcours = (int)($p['nb_parcours'] ?? 0);
+            $isActive   = (bool)($p['actif'] ?? 1);
+        ?>
+            <div class="poiz-card-wrap" data-name="<?= htmlspecialchars(strtolower($p['nom'])) ?>" data-theme="<?= htmlspecialchars(strtolower($p['theme'] ?? '')) ?>">
+                <div class="poiz-card">
+
+                    <div class="poiz-card-img">
+                        <?php if (!$isActive): ?>
+                            <span class="inactive-badge">Inactif</span>
+                        <?php endif; ?>
+                        <?php if (!empty($p['logo'])): ?>
+                            <img src="<?= htmlspecialchars($p['logo']) ?>" alt="<?= htmlspecialchars($p['nom']) ?>">
+                        <?php else: ?>
+                            <div class="text-4xl text-gray-300">📍</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="poiz-card-body">
+                        <p class="poiz-name"><?= htmlspecialchars($p['nom']) ?></p>
+                        <?php if (!empty($p['theme'])): ?>
+                            <span class="poiz-theme">🏷 <?= htmlspecialchars($p['theme']) ?></span>
+                        <?php endif; ?>
+                        <p class="poiz-count mt-auto pt-1">
+                            <?= $nbParcours ?> parcours lié<?= $nbParcours > 1 ? 's' : '' ?>
+                        </p>
+                    </div>
+
+                    <?php if ($isAdmin): ?>
+                        <div class="poiz-actions">
+                            <a href="/poiz/edit?id=<?= (int)$p['id'] ?>" class="btn-edit">✏️ Modifier</a>
+                            <?php if ($nbParcours === 0): ?>
+                                <form method="post" action="/poiz/delete"
+                                      onsubmit="return confirm('Supprimer « <?= htmlspecialchars(addslashes($p['nom'])) ?> » ?')">
+                                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                                    <button type="submit" class="btn-delete w-full">🗑 Supprimer</button>
+                                </form>
+                            <?php else: ?>
+                                <span class="btn-locked" title="Utilisé dans <?= $nbParcours ?> parcours">🔒 Utilisé</span>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
                 </div>
             </div>
         <?php endforeach; ?>
-    <?php else: ?>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4" id="poizGrid">
-            <?php foreach ($poiz as $p): ?>
-                <?php include __DIR__ . '/_card.php'; ?>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+    </div>
 
 <?php endif; ?>
 
 <script>
-const searchInput = document.getElementById('poizSearch');
-searchInput?.addEventListener('input', function() {
+document.getElementById('poizSearch')?.addEventListener('input', function () {
     const q = this.value.toLowerCase().trim();
     document.querySelectorAll('.poiz-card-wrap').forEach(wrap => {
-        const name  = wrap.dataset.name || '';
-        const theme = wrap.dataset.theme || '';
-        wrap.style.display = (!q || name.includes(q) || theme.includes(q)) ? '' : 'none';
-    });
-    // Cacher les sections vides
-    document.querySelectorAll('.poiz-theme-group').forEach(group => {
-        const visible = [...group.querySelectorAll('.poiz-card-wrap')].some(c => c.style.display !== 'none');
-        group.style.display = visible ? '' : 'none';
+        const match = !q || wrap.dataset.name.includes(q) || wrap.dataset.theme.includes(q);
+        wrap.style.display = match ? '' : 'none';
     });
 });
 </script>
