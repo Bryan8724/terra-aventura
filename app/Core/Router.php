@@ -121,49 +121,24 @@ class Router
     }
 
     /* =======================================================
-       404
+       404 — ✅ FIX : page HTML propre au lieu de '404 - Page not found'
     ======================================================= */
 
     private function handleNotFound(string $uri): void
     {
-        http_response_code(404);
-
-        if ($this->isApi($uri)) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'success' => false,
-                'message' => 'Route introuvable'
-            ]);
-            return;
-        }
-
-        echo '404 - Page not found';
+        ErrorPage::abort(
+            404,
+            'La page « ' . htmlspecialchars($uri, ENT_QUOTES, 'UTF-8') . ' » n\'existe pas.'
+        );
     }
 
     /* =======================================================
-       EXCEPTION HANDLER
+       500 — ✅ FIX : page HTML propre au lieu de '500 - Erreur serveur'
     ======================================================= */
 
     private function handleException(Throwable $e): void
     {
-        http_response_code(500);
-
-        $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
-
-        if ($env === 'dev') {
-
-            echo "<pre style='background:#111;color:#ff6b6b;padding:20px'>";
-            echo "💥 ERREUR SERVEUR\n\n";
-            echo "Message : " . $e->getMessage() . "\n\n";
-            echo "Fichier : " . $e->getFile() . "\n";
-            echo "Ligne   : " . $e->getLine() . "\n\n";
-            echo "Trace :\n" . $e->getTraceAsString();
-            echo "</pre>";
-
-            return;
-        }
-
-        echo '500 - Erreur serveur';
+        ErrorPage::abort(500, null, $e);
     }
 
     /* =======================================================

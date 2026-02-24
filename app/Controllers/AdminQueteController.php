@@ -7,6 +7,7 @@ use Exception;
 use Core\Toast;
 use Core\Response;
 use Core\ApiAuth;
+use Core\ErrorPage;
 use Models\Quete;
 
 class AdminQueteController
@@ -41,10 +42,9 @@ class AdminQueteController
             return $user;
         }
 
-        // Web classique
+        // ✅ FIX : page HTML propre au lieu de http_response_code(403) + exit (page blanche)
         if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
-            http_response_code(403);
-            exit;
+            ErrorPage::render(403, 'Cette section est réservée aux administrateurs.');
         }
 
         return null;
@@ -192,7 +192,7 @@ class AdminQueteController
             if ($isApi) {
                 Response::json([
                     'success' => false,
-                    'message' => 'Erreur serveur'
+                    'message' => 'Erreur lors de la création de la quête'
                 ], 500);
             }
 
@@ -244,7 +244,8 @@ class AdminQueteController
 
             if ($isApi) {
                 Response::json([
-                    'success' => true
+                    'success' => true,
+                    'message' => 'Quête mise à jour'
                 ]);
             }
 
@@ -258,7 +259,8 @@ class AdminQueteController
 
             if ($isApi) {
                 Response::json([
-                    'success' => false
+                    'success' => false,
+                    'message' => 'Erreur lors de la mise à jour de la quête'
                 ], 500);
             }
 
@@ -300,7 +302,8 @@ class AdminQueteController
 
         if ($isApi) {
             Response::json([
-                'success' => true
+                'success' => true,
+                'message' => 'Quête supprimée'
             ]);
         }
 

@@ -13,23 +13,13 @@ class AdminMiddleware
 
             $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
 
-            // 👉 VERSION API
+            // VERSION API → JSON
             if (str_starts_with($uri, '/api/')) {
-
-                header('Content-Type: application/json');
-                http_response_code(403);
-
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Accès réservé aux administrateurs'
-                ]);
-                exit;
+                ErrorPage::json(403, 'Accès réservé aux administrateurs');
             }
 
-            // 👉 VERSION WEB
-            http_response_code(403);
-            echo '403 - Accès réservé aux administrateurs';
-            exit;
+            // ✅ FIX : VERSION WEB → page HTML propre au lieu de '403 - Accès réservé aux administrateurs'
+            ErrorPage::render(403, 'Cette section est réservée aux administrateurs. Votre compte n\'a pas les droits nécessaires.');
         }
     }
 }

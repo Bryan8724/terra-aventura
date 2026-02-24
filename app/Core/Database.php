@@ -52,7 +52,7 @@ class Database
                 ]
             );
 
-            // 🔥 Fuseau horaire MySQL
+            // Fuseau horaire MySQL
             $pdo->exec("SET time_zone = 'Europe/Paris'");
 
             return $pdo;
@@ -65,29 +65,24 @@ class Database
 
     /*
     |--------------------------------------------------------------------------
-    | Gestion erreur propre Web / API
+    | ✅ FIX : Gestion erreur propre Web / API
+    |    Avant : echo 'Erreur de connexion à la base de données.' (texte brut)
+    |    Après : page HTML propre via ErrorPage, JSON si API
     |--------------------------------------------------------------------------
     */
-    private static function handleError(PDOException $e): void
+    private static function handleError(PDOException $e): never
     {
+        $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
+
+        $message = 'Impossible de se connecter à la base de données. Veuillez réessayer dans quelques instants.';
+
+        // En mode API → JSON
         $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
-
-        http_response_code(500);
-
         if (str_starts_with($uri, '/api/')) {
-
-            header('Content-Type: application/json');
-
-            echo json_encode([
-                'success' => false,
-                'message' => 'Erreur de connexion base de données'
-            ]);
-
-        } else {
-
-            echo 'Erreur de connexion à la base de données.';
+            ErrorPage::json(500, 'Erreur de connexion à la base de données');
         }
 
-        exit;
+        // En mode web → page HTML propre (avec détail en dev)
+        ErrorPage::render(500, $message, $env === 'dev' ? $e : null);
     }
 }

@@ -5,14 +5,13 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 | ENVIRONMENT
 |--------------------------------------------------------------------------
-| ✅ FIX : harmonisé avec app.php — défaut 'prod' dans les deux fichiers
 */
 
 $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
 
 /*
 |--------------------------------------------------------------------------
-| DEBUG MODE (DEV ONLY)
+| DEBUG MODE
 |--------------------------------------------------------------------------
 */
 
@@ -42,12 +41,9 @@ $isHttps =
 |--------------------------------------------------------------------------
 | CORS — APPLICATION MOBILE
 |--------------------------------------------------------------------------
-| ✅ AJOUT : les appels API depuis l'app mobile nécessitent des headers CORS.
-|    On les applique uniquement aux routes /api/ pour ne pas exposer le site web.
 */
 
-$requestUri  = $_SERVER['REQUEST_URI'] ?? '';
-$requestPath = parse_url($requestUri, PHP_URL_PATH) ?? '';
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 
 if (str_starts_with($requestPath, '/api/')) {
 
@@ -55,7 +51,6 @@ if (str_starts_with($requestPath, '/api/')) {
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept');
 
-    // Réponse immédiate aux requêtes preflight OPTIONS
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         http_response_code(204);
         exit;
@@ -111,57 +106,52 @@ require_once ROOT_PATH . '/Core/Autoloader.php';
 |--------------------------------------------------------------------------
 | GLOBAL ERROR HANDLING
 |--------------------------------------------------------------------------
+| ✅ FIX : les erreurs non gérées affichent désormais une page HTML propre
+|          via ErrorPage::render() au lieu de "Une erreur est survenue."
+|          En mode API → JSON structuré. En mode dev → trace complète affichée.
 */
 
-set_error_handler(function ($severity, $message, $file, $line) use ($env) {
+use Core\ErrorPage;
+
+set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
 
     // Respecter l'opérateur @ (suppression d'erreurs)
     if (error_reporting() === 0) {
         return false;
     }
 
-    if ($env === 'dev') {
-        echo "<pre style='background:#111;color:#ff6b6b;padding:20px'>";
-        echo "⚠ PHP ERROR\n\n";
-        echo "Message : " . $message . "\n\n";
-        echo "File    : " . $file . "\n";
-        echo "Line    : " . $line . "\n";
-        echo "</pre>";
-        exit;
-    }
-
+    // Convertir les erreurs PHP en exceptions pour qu'elles remontent
     throw new ErrorException($message, 0, $severity, $file, $line);
 });
 
-set_exception_handler(function (Throwable $e) use ($env) {
-
-    http_response_code(500);
+set_exception_handler(function (\Throwable $e) use ($env): void {
 
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 
-    if ($env === 'dev') {
-
-        echo "<pre style='background:#111;color:#ff6b6b;padding:20px'>";
-        echo "💥 EXCEPTION\n\n";
-        echo "Message : " . $e->getMessage() . "\n\n";
-        echo "File    : " . $e->getFile() . "\n";
-        echo "Line    : " . $e->getLine() . "\n\n";
-        echo "Trace :\n" . $e->getTraceAsString();
-        echo "</pre>";
-        exit;
-    }
-
+    // ✅ FIX : version API → JSON structuré avec détail en dev
     if (str_starts_with($uri, '/api/')) {
+
+        while (ob_get_level() > 0) ob_end_clean();
+        http_response_code(500);
         header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'message' => 'Erreur serveur'
-        ]);
+
+        $payload = ['success' => false, 'message' => 'Erreur serveur interne'];
+
+        if ($env === 'dev') {
+            $payload['debug'] = [
+                'exception' => get_class($e),
+                'message'   => $e->getMessage(),
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+            ];
+        }
+
+        echo json_encode($payload);
         exit;
     }
 
-    echo 'Une erreur est survenue.';
-    exit;
+    // ✅ FIX : version web → page HTML propre au lieu de "Une erreur est survenue."
+    ErrorPage::render(500, null, $e);
 });
 
 /*

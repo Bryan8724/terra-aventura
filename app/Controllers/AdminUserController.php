@@ -5,6 +5,7 @@ namespace Controllers;
 use Core\Database;
 use Core\Response;
 use Core\ApiAuth;
+use Core\ErrorPage;
 
 class AdminUserController
 {
@@ -31,10 +32,9 @@ class AdminUserController
             return;
         }
 
-        // Web classique
+        // ✅ FIX : page HTML propre au lieu de http_response_code(403) + exit (page blanche)
         if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
-            http_response_code(403);
-            exit;
+            ErrorPage::render(403, 'Cette section est réservée aux administrateurs.');
         }
     }
 
@@ -196,7 +196,7 @@ class AdminUserController
             '/api/'
         );
 
-        $pdo = Database::getInstance();
+        $pdo    = Database::getInstance();
         $userId = (int)($_POST['id'] ?? 0);
 
         if ($userId <= 0) {

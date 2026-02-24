@@ -8,6 +8,7 @@ use Core\Auth;
 use Core\ApiAuth;
 use Core\AdminMiddleware;
 use Core\Database;
+use Core\ErrorPage;
 use PDO;
 
 class PoizController
@@ -75,12 +76,12 @@ class PoizController
     {
         AdminMiddleware::handle();
 
-        $id = (int)($_GET['id'] ?? 0);
+        $id   = (int)($_GET['id'] ?? 0);
         $poiz = $this->poiz->getById($id);
 
+        // ✅ FIX : page HTML propre au lieu de exit('POIZ introuvable')
         if (!$poiz) {
-            http_response_code(404);
-            exit('POIZ introuvable');
+            ErrorPage::render(404, 'Ce POIZ n\'existe pas ou a été supprimé.');
         }
 
         $title = 'Modifier un POIZ';

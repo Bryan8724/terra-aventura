@@ -6,6 +6,7 @@ use Core\Auth;
 use Core\ApiAuth;
 use Core\Toast;
 use Core\Response;
+use Core\ErrorPage;
 use Models\Maintenance;
 
 class MaintenanceController
@@ -27,11 +28,6 @@ class MaintenanceController
             '/api/'
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🔐 VERSION API
-        |--------------------------------------------------------------------------
-        */
         if ($isApi) {
 
             $user = ApiAuth::requireAuth();
@@ -51,11 +47,6 @@ class MaintenanceController
             ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 🌐 VERSION WEB
-        |--------------------------------------------------------------------------
-        */
         Auth::check();
 
         if (empty($_SESSION['csrf_token'])) {
@@ -316,6 +307,7 @@ class MaintenanceController
 
     /* =========================================================
        CSRF (WEB ONLY)
+       ✅ FIX : page HTML propre au lieu de exit('CSRF invalide')
     ========================================================= */
     private function checkCsrf(): void
     {
@@ -324,8 +316,7 @@ class MaintenanceController
             empty($_SESSION['csrf_token']) ||
             !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
         ) {
-            http_response_code(403);
-            exit('CSRF invalide');
+            ErrorPage::render(403, 'Token de sécurité invalide ou expiré. Veuillez recharger la page et réessayer.');
         }
     }
 }
