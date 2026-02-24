@@ -22,7 +22,7 @@ class ParcoursController
 
     public function __construct(?PDO $db = null)
     {
-        $this->db = $db ?? Database::getInstance();
+        $this->db          = $db ?? Database::getInstance();
         $this->parcours    = new Parcours($this->db);
         $this->poiz        = new Poiz($this->db);
         $this->maintenance = new Maintenance();
@@ -39,7 +39,7 @@ class ParcoursController
         );
 
         if ($isApi) {
-            $user = ApiAuth::requireAuth();
+            $user   = ApiAuth::requireAuth();
             $userId = (int)$user['id'];
         } else {
             Auth::check();
@@ -117,7 +117,7 @@ class ParcoursController
         }
 
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 p.id,
                 p.titre,
                 p.ville,
@@ -162,20 +162,34 @@ class ParcoursController
             $user = $_SESSION['user'];
         }
 
+        // ✅ FIX : vérification admin correctement séparée web / API
         if (($user['role'] ?? '') === 'admin') {
-            Response::json([
-                'success' => false,
-                'message' => 'Un administrateur ne peut pas valider'
-            ], 403);
+            if ($isApi) {
+                Response::json([
+                    'success' => false,
+                    'message' => 'Un administrateur ne peut pas valider un parcours'
+                ], 403);
+            }
+
+            Toast::add('error', 'Les administrateurs ne peuvent pas valider un parcours');
+            header('Location: /parcours');
+            exit;
         }
 
         $parcoursId = (int)($_POST['parcours_id'] ?? 0);
 
+        // ✅ FIX : vérification maintenance correctement séparée web / API
         if ($this->maintenance->isInMaintenance($parcoursId)) {
-            Response::json([
-                'success' => false,
-                'message' => 'Parcours en maintenance'
-            ], 409);
+            if ($isApi) {
+                Response::json([
+                    'success' => false,
+                    'message' => 'Ce parcours est temporairement indisponible (maintenance)'
+                ], 409);
+            }
+
+            Toast::add('error', 'Ce parcours est temporairement indisponible (maintenance)');
+            header('Location: /parcours');
+            exit;
         }
 
         $this->parcours->validateForUser(
@@ -193,7 +207,7 @@ class ParcoursController
             ]);
         }
 
-        Toast::add('success', 'Parcours validé');
+        Toast::add('success', 'Parcours validé !');
         header('Location: /parcours');
         exit;
     }
@@ -203,9 +217,35 @@ class ParcoursController
     ========================================================= */
     public function reset(): void
     {
-        $user = ApiAuth::requireAuth();
+        // ✅ FIX : supportait uniquement l'API, bloquait les sessions web
+        $isApi = str_starts_with(
+            parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH),
+            '/api/'
+        );
 
-        $payload = json_decode(file_get_contents('php://input'), true);
+        if ($isApi) {
+            $user = ApiAuth::requireAuth();
+
+            $payload    = json_decode(file_get_contents('php://input'), true);
+            $parcoursId = (int)($payload['parcours_id'] ?? 0);
+        } else {
+            Auth::check();
+            $user       = $_SESSION['user'];
+            $parcoursId = (int)($_POST['parcours_id'] ?? 0);
+        }
+
+        if ($parcoursId === 0) {
+            if ($isApi) {
+                Response::json([
+                    'success' => false,
+                    'message' => 'parcours_id manquant'
+                ], 400);
+            }
+
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
 
         $stmt = $this->db->prepare("
             DELETE FROM parcours_effectues
@@ -215,13 +255,19 @@ class ParcoursController
 
         $stmt->execute([
             (int)$user['id'],
-            (int)($payload['parcours_id'] ?? 0)
+            $parcoursId
         ]);
 
-        Response::json([
-            'success' => true,
-            'message' => 'Parcours réinitialisé'
-        ]);
+        if ($isApi) {
+            Response::json([
+                'success' => true,
+                'message' => 'Parcours réinitialisé'
+            ]);
+        }
+
+        Toast::add('success', 'Parcours réinitialisé');
+        header('Location: /parcours');
+        exit;
     }
 
     /* =========================================================

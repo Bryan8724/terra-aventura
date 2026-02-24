@@ -5,6 +5,7 @@ declare(strict_types=1);
 |--------------------------------------------------------------------------
 | ENVIRONMENT
 |--------------------------------------------------------------------------
+| ✅ FIX : harmonisé avec app.php — défaut 'prod' dans les deux fichiers
 */
 
 $env = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'prod';
@@ -36,6 +37,30 @@ $isHttps =
     || ($_SERVER['SERVER_PORT'] ?? null) == 443
     || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
         && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+/*
+|--------------------------------------------------------------------------
+| CORS — APPLICATION MOBILE
+|--------------------------------------------------------------------------
+| ✅ AJOUT : les appels API depuis l'app mobile nécessitent des headers CORS.
+|    On les applique uniquement aux routes /api/ pour ne pas exposer le site web.
+*/
+
+$requestUri  = $_SERVER['REQUEST_URI'] ?? '';
+$requestPath = parse_url($requestUri, PHP_URL_PATH) ?? '';
+
+if (str_starts_with($requestPath, '/api/')) {
+
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Authorization, Content-Type, Accept');
+
+    // Réponse immédiate aux requêtes preflight OPTIONS
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -90,7 +115,7 @@ require_once ROOT_PATH . '/Core/Autoloader.php';
 
 set_error_handler(function ($severity, $message, $file, $line) use ($env) {
 
-    // ✅ Respecter l'opérateur @ (suppression d'erreurs)
+    // Respecter l'opérateur @ (suppression d'erreurs)
     if (error_reporting() === 0) {
         return false;
     }
@@ -148,7 +173,7 @@ set_exception_handler(function (Throwable $e) use ($env) {
 use Core\Database;
 use Core\Router;
 
-$db = Database::getInstance();
+$db     = Database::getInstance();
 $router = new Router($db);
 
 /*

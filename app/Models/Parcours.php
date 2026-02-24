@@ -9,9 +9,11 @@ class Parcours
 {
     private PDO $db;
 
-    public function __construct()
+    // ✅ FIX : accepte un PDO injecté (cohérent avec tous les autres modèles)
+    //          ParcoursController passait $this->db mais le constructeur l'ignorait
+    public function __construct(?PDO $db = null)
     {
-        $this->db = Database::getInstance();
+        $this->db = $db ?? Database::getInstance();
     }
 
     /* =========================
@@ -236,8 +238,8 @@ class Parcours
     public function validateForUser(
         int $userId,
         int $parcoursId,
-        string $date,
-        string $heure,
+        ?string $date,
+        ?string $heure,
         int $badges
     ): void {
         if ($this->alreadyValidated($userId, $parcoursId)) {

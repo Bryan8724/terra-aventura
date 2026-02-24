@@ -23,9 +23,9 @@ class AuthController
     ========================= */
     public function login(): void
     {
-        // 🔐 Détection API SAFE (compatible PHP 8.3 + proxy)
-        $uri  = $_SERVER['REQUEST_URI'] ?? '';
-        $path = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
+        // Détection API (compatible PHP 8.3 + proxy)
+        $uri   = $_SERVER['REQUEST_URI'] ?? '';
+        $path  = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
         $isApi = str_starts_with($path, '/api/');
 
         $login    = trim($_POST['login'] ?? '');
@@ -83,7 +83,7 @@ class AuthController
         }
 
         /* =========================
-           🔐 VERSION API → TOKEN
+           VERSION API → TOKEN
         ========================= */
         if ($isApi) {
 
@@ -100,10 +100,11 @@ class AuthController
                     'role'     => $user['role'],
                 ]
             ]);
+            // Response::json() appelle exit — le code ci-dessous ne s'exécute pas
         }
 
         /* =========================
-           🌐 VERSION WEB → SESSION
+           VERSION WEB → SESSION
         ========================= */
         Auth::login($user);
 
@@ -116,18 +117,18 @@ class AuthController
     ========================= */
     public function logout(): void
     {
-        $uri  = $_SERVER['REQUEST_URI'] ?? '';
-        $path = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
+        $uri   = $_SERVER['REQUEST_URI'] ?? '';
+        $path  = is_string($uri) ? (parse_url($uri, PHP_URL_PATH) ?? '') : '';
         $isApi = str_starts_with($path, '/api/');
 
         if ($isApi) {
-
             ApiAuth::invalidateCurrentToken();
 
             Response::json([
                 'success' => true,
                 'message' => 'Déconnexion réussie'
             ]);
+            // Response::json() appelle exit — Auth::logout() web ne s'exécute pas
         }
 
         Auth::logout();
@@ -167,16 +168,24 @@ class AuthController
             $user = $stmt->fetch();
 
             if ($user) {
+
+                // ✅ FIX : génération d'un token sécurisé
+                //          L'ancien code insérait 'email' (colonne inexistante)
+                //          et n'insérait pas 'token' (colonne NOT NULL) → plantait
+                $token = bin2hex(random_bytes(32));
+
                 $pdo->prepare("
-                    INSERT INTO password_requests (user_id, email)
-                    VALUES (:user_id, :email)
+                    INSERT INTO password_requests (user_id, email, token)
+                    VALUES (:user_id, :email, :token)
                 ")->execute([
                     'user_id' => $user['id'],
                     'email'   => $email,
+                    'token'   => $token,
                 ]);
             }
 
-            $message = "Votre demande a été envoyée à l’administrateur.";
+            // Message générique pour ne pas révéler si l'email existe
+            $message = "Si cet email est connu, votre demande a été envoyée à l'administrateur.";
         }
 
         require VIEW_PATH . '/auth/forgot_password.php';

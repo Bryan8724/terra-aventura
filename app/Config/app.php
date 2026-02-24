@@ -5,17 +5,21 @@
 | Environnement
 |--------------------------------------------------------------------------
 |
-| APP_ENV   = local | production
-| APP_DEBUG = true  | false
+| APP_ENV   = dev | prod
+| APP_DEBUG = true | false
+|
+| ✅ FIX : valeur par défaut harmonisée avec index.php ('prod' au lieu de 'local')
+|          Le docker-compose définit APP_ENV=dev explicitement.
+|          Sans variable d'env → comportement production (sécurisé par défaut).
 |
 */
 
-$env = getenv('APP_ENV') ?: 'local';
+$env = getenv('APP_ENV') ?: 'prod';
 
 $debugEnv = getenv('APP_DEBUG');
 $debug = $debugEnv !== false
     ? filter_var($debugEnv, FILTER_VALIDATE_BOOLEAN)
-    : ($env === 'local');
+    : ($env === 'dev');
 
 
 /*
@@ -67,6 +71,6 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', '1');
     ini_set('session.cookie_httponly', '1');
 
-    // Empêche l’ID session dans l’URL
+    // Empêche l'ID session dans l'URL
     ini_set('session.use_trans_sid', '0');
 }
