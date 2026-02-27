@@ -9,6 +9,9 @@ class Parcours
 {
     private PDO $db;
 
+    /** ID du POIZ Zaméla — parcours éphémères avec date_debut/date_fin */
+    public const ZAMELA_POIZ_ID = 32;
+
     // ✅ FIX : accepte un PDO injecté (cohérent avec tous les autres modèles)
     //          ParcoursController passait $this->db mais le constructeur l'ignorait
     public function __construct(?PDO $db = null)
@@ -45,6 +48,14 @@ class Parcours
 
         $params = [$userId];
 
+        /* ===== EXCLUSION / INCLUSION ZAMÉLA ===== */
+        if (!empty($filters['zamela_only'])) {
+            $sql .= " AND p.poiz_id = " . self::ZAMELA_POIZ_ID;
+        } else {
+            // Onglet Parcours classique : on exclut Zaméla
+            $sql .= " AND p.poiz_id != " . self::ZAMELA_POIZ_ID;
+        }
+
         /* ===== FILTRE EFFECTUÉS ===== */
         if (!empty($filters['effectues'])) {
             $sql .= " AND pe.parcours_id IS NOT NULL";
@@ -80,7 +91,12 @@ class Parcours
         }
 
         /* ===== TRI ===== */
-        $sql .= " ORDER BY p.departement_code, p.created_at DESC";
+        if (!empty($filters['zamela_only'])) {
+            // Zaméla : trier par date de début croissante
+            $sql .= " ORDER BY p.date_debut ASC, p.departement_code";
+        } else {
+            $sql .= " ORDER BY p.departement_code, p.created_at DESC";
+        }
 
         /* ===== PAGINATION (FIX MARIA DB) ===== */
         $limit  = (int) $limit;
@@ -108,6 +124,13 @@ class Parcours
         ";
 
         $params = [$userId];
+
+        /* ===== EXCLUSION / INCLUSION ZAMÉLA ===== */
+        if (!empty($filters['zamela_only'])) {
+            $sql .= " AND p.poiz_id = " . self::ZAMELA_POIZ_ID;
+        } else {
+            $sql .= " AND p.poiz_id != " . self::ZAMELA_POIZ_ID;
+        }
 
         if (!empty($filters['effectues'])) {
             $sql .= " AND pe.parcours_id IS NOT NULL";
@@ -152,8 +175,9 @@ class Parcours
     {
         $stmt = $this->db->prepare("
             INSERT INTO parcours
-            (poiz_id, titre, ville, departement_code, departement_nom, niveau, terrain, duree, distance_km)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (poiz_id, titre, ville, departement_code, departement_nom,
+             niveau, terrain, duree, distance_km, date_debut, date_fin)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
 
         $stmt->execute([
@@ -165,7 +189,9 @@ class Parcours
             $data['niveau'],
             $data['terrain'],
             $data['duree'],
-            $data['distance_km']
+            $data['distance_km'],
+            $data['date_debut'] ?: null,
+            $data['date_fin']   ?: null,
         ]);
     }
 
@@ -181,7 +207,8 @@ class Parcours
         $stmt = $this->db->prepare("
             UPDATE parcours SET
                 poiz_id = ?, titre = ?, ville = ?, departement_code = ?, departement_nom = ?,
-                niveau = ?, terrain = ?, duree = ?, distance_km = ?
+                niveau = ?, terrain = ?, duree = ?, distance_km = ?,
+                date_debut = ?, date_fin = ?
             WHERE id = ?
         ");
 
@@ -195,7 +222,9 @@ class Parcours
             $data['terrain'],
             $data['duree'],
             $data['distance_km'],
-            $id
+            $data['date_debut'] ?: null,
+            $data['date_fin']   ?: null,
+            $id,
         ]);
     }
 

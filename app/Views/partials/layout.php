@@ -19,11 +19,14 @@ $path = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/');
 */
 $section = match (true) {
     $path === ''                               => 'dashboard',
+    str_starts_with($path, 'zamela')           => 'zamela',
     str_starts_with($path, 'parcours')         => 'parcours',
     str_starts_with($path, 'maintenance')      => 'maintenance',
     str_starts_with($path, 'quetes'),
     str_starts_with($path, 'admin/quetes')     => 'quetes',
     str_starts_with($path, 'poiz')             => 'poiz',
+    str_starts_with($path, 'evenement')        => 'evenement',
+    str_starts_with($path, 'stats')            => 'stats',
     str_starts_with($path, 'admin/messages')   => 'messages',
     str_starts_with($path, 'admin/users')      => 'users',
     default                                    => '',
@@ -105,6 +108,21 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
                 <a href="/parcours"
                    class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('parcours', $section) ?>">
                     🗺️ Parcours
+                </a>
+
+                <a href="/zamela"
+                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('zamela', $section) ?>">
+                    ⚡ Zaméla
+                </a>
+
+                <a href="/evenement"
+                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('evenement', $section) ?>">
+                    🎉 Événements
+                </a>
+
+                <a href="/stats"
+                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('stats', $section) ?>">
+                    📊 Statistiques
                 </a>
 
                 <a href="/maintenance"

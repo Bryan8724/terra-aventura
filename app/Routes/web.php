@@ -101,6 +101,48 @@ $router->get('/admin/quetes/search-parcours', ['AdminQueteController', 'searchPa
 
 /*
 |--------------------------------------------------------------------------
+| ZAMÉLA (Parcours éphémères)
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/zamela', ['ZamelaController', 'index']);
+$router->get('/zamela/create', ['ZamelaController', 'create']);
+$router->post('/zamela/store', ['ZamelaController', 'store']);
+$router->get('/zamela/edit', ['ZamelaController', 'edit']);
+$router->post('/zamela/update', ['ZamelaController', 'update']);
+$router->post('/zamela/delete', ['ZamelaController', 'delete']);
+
+
+/*
+|--------------------------------------------------------------------------
+| ÉVÉNEMENTS
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/evenement', ['EvenementController', 'index']);
+$router->get('/evenement/create', ['EvenementController', 'create']);
+$router->post('/evenement/store', ['EvenementController', 'store']);
+$router->get('/evenement/edit', ['EvenementController', 'edit']);
+$router->post('/evenement/update', ['EvenementController', 'update']);
+$router->post('/evenement/delete', ['EvenementController', 'delete']);
+$router->get('/evenement/detail', ['EvenementController', 'detail']);
+$router->post('/evenement/valider', ['EvenementController', 'valider']);
+$router->post('/evenement/reset', ['EvenementController', 'reset']);
+$router->post('/evenement/valider-parcours', ['EvenementController', 'validerParcours']);
+$router->post('/evenement/reset-parcours', ['EvenementController', 'resetParcours']);
+
+
+/*
+|--------------------------------------------------------------------------
+| STATISTIQUES
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/stats', ['StatsController', 'index']);
+
+
+/*
+|--------------------------------------------------------------------------
 | POIZ
 |--------------------------------------------------------------------------
 */
@@ -177,6 +219,14 @@ $router->post('/api/parcours/valider', ['ParcoursController', 'valider']);
 $router->post('/api/parcours/reset', ['ParcoursController', 'reset']);
 
 $router->get('/api/quetes', ['QueteController', 'index']);
+
+$router->get('/api/zamela', ['ZamelaController', 'index']);
+
+$router->get('/api/evenement', ['EvenementController', 'index']);
+$router->post('/api/evenement/valider', ['EvenementController', 'valider']);
+$router->post('/api/evenement/valider-parcours', ['EvenementController', 'validerParcours']);
+
+$router->get('/api/stats', ['StatsController', 'index']);
 
 $router->get('/api/user/profile', ['UserController', 'editProfile']);
 $router->post('/api/user/update-profile', ['UserUpdateProfileController', 'index']);

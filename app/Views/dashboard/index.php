@@ -90,8 +90,8 @@ $progression = ($totalParcours > 0) ? round(($effectues / $totalParcours) * 100)
     <?php endif; ?>
 </div>
 
-<!-- Cartes principales -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<!-- Grille principale : 6 cards sur 2 lignes si mobile, 3 cols sur desktop -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
 
     <!-- Parcours -->
     <a href="/parcours" class="dash-card">
@@ -139,15 +139,57 @@ $progression = ($totalParcours > 0) ? round(($effectues / $totalParcours) * 100)
         </div>
     </a>
 
-    <!-- Événements (bientôt) -->
-    <div class="dash-card disabled">
-        <div class="card-icon bg-gray-100">🎉</div>
+    <!-- Zaméla -->
+    <a href="/zamela" class="dash-card">
+        <div class="card-icon" style="background:#f5f3ff">⚡</div>
+        <div>
+            <p class="card-label">Zaméla</p>
+            <p class="card-value"><?= $totalZamela ?></p>
+            <p class="card-sub mt-1">
+                <?php if ($zamelaEffectues > 0): ?>
+                    <span style="color:#7c3aed;font-weight:600"><?= $zamelaEffectues ?> effectué<?= $zamelaEffectues > 1 ? 's' : '' ?></span>
+                <?php else: ?>
+                    éphémères
+                <?php endif; ?>
+            </p>
+        </div>
+    </a>
+
+    <!-- Événements -->
+    <a href="/evenement" class="dash-card">
+        <div class="card-icon bg-orange-50">🎉</div>
         <div>
             <p class="card-label">Événements</p>
-            <p class="card-value text-gray-300">—</p>
-            <p class="card-sub mt-1">Bientôt disponible</p>
+            <p class="card-value"><?= $totalEvenements ?></p>
+            <p class="card-sub mt-1">
+                <?php if ($evenementsEffectues > 0): ?>
+                    <span class="text-orange-500 font-semibold"><?= $evenementsEffectues ?> participé<?= $evenementsEffectues > 1 ? 's' : '' ?></span>
+                <?php else: ?>
+                    à découvrir
+                <?php endif; ?>
+            </p>
         </div>
-    </div>
+    </a>
+
+    <!-- Statistiques -->
+    <a href="/stats" class="dash-card">
+        <div class="card-icon bg-emerald-50">📊</div>
+        <div>
+            <p class="card-label">Statistiques</p>
+            <?php
+            $totalItems = $totalParcours + $totalZamela + $totalEvenements;
+            $doneItems  = $effectues + $zamelaEffectues + $evenementsEffectues;
+            $scoreGlobal = $totalItems > 0 ? round($doneItems / $totalItems * 100) : 0;
+            ?>
+            <p class="card-value text-emerald-600"><?= $scoreGlobal ?>%</p>
+            <p class="card-sub mt-1">score global</p>
+            <?php if ($totalItems > 0): ?>
+                <div class="progress-track mt-2">
+                    <div class="progress-fill" style="width:<?= $scoreGlobal ?>%;background:linear-gradient(90deg,#059669,#10b981)"></div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </a>
 
 </div>
 

@@ -286,9 +286,10 @@ class ParcoursController
             '40' => 'Landes',
             '47' => 'Lot-et-Garonne',
             '64' => 'Pyrénées-Atlantiques',
+            '75' => 'Paris',
             '79' => 'Deux-Sèvres',
             '86' => 'Vienne',
-            '87' => 'Haute-Vienne'
+            '87' => 'Haute-Vienne',
         ];
     }
 

@@ -7,6 +7,12 @@ chown -R www-data:www-data /var/www/html/app/Storage
 chmod -R 775 /var/www/html/app/Storage
 echo "[entrypoint] Permissions Storage OK"
 
+# ✅ Fix permissions sur public/uploads/ au démarrage
+mkdir -p /var/www/html/app/public/uploads/poiz
+chown -R www-data:www-data /var/www/html/app/public/uploads
+chmod -R 775 /var/www/html/app/public/uploads
+echo "[entrypoint] Permissions uploads OK"
+
 # ✅ SSH : copie la clé de root vers www-data pour le git push
 # (le volume monte /root/.ssh mais git exec() tourne en www-data)
 if [ -d /root/.ssh ]; then

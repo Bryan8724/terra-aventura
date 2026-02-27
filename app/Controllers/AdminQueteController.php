@@ -129,6 +129,80 @@ class AdminQueteController
     }
 
     /* =========================
+       CREATE (ADMIN)
+    ========================= */
+    public function create(): void
+    {
+        $this->requireAdmin();
+
+        $title = 'Ajouter une quête';
+
+        ob_start();
+        require ROOT_PATH . '/Views/admin/quetes/create.php';
+        $content = ob_get_clean();
+
+        require ROOT_PATH . '/Views/partials/layout.php';
+    }
+
+    /* =========================
+       EDIT (ADMIN)
+    ========================= */
+    public function edit(): void
+    {
+        $this->requireAdmin();
+
+        $id    = (int)($_GET['id'] ?? 0);
+        $quete = $this->quete->getById($id);
+
+        if (!$quete) {
+            ErrorPage::render(404, 'Cette quête n\'existe pas ou a été supprimée.');
+        }
+
+        $objets = $this->quete->getObjetsWithParcours($id);
+        $title  = 'Modifier la quête';
+
+        ob_start();
+        require ROOT_PATH . '/Views/admin/quetes/edit.php';
+        $content = ob_get_clean();
+
+        require ROOT_PATH . '/Views/partials/layout.php';
+    }
+
+    /* =========================
+       SEARCH PARCOURS (AJAX)
+    ========================= */
+    public function searchParcours(): void
+    {
+        $this->requireAdmin();
+
+        $q = trim($_GET['q'] ?? '');
+
+        if (strlen($q) < 2) {
+            Response::json([]);
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT
+                p.id,
+                p.titre,
+                p.ville,
+                p.departement_code,
+                po.logo
+            FROM parcours p
+            JOIN poiz po ON po.id = p.poiz_id
+            WHERE p.titre LIKE :q
+               OR p.ville  LIKE :q
+            ORDER BY p.titre
+            LIMIT 30
+        ");
+
+        $stmt->execute(['q' => '%' . $q . '%']);
+        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        Response::json($results);
+    }
+
+    /* =========================
        STORE
     ========================= */
     public function store(): void

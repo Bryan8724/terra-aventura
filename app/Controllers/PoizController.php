@@ -277,14 +277,36 @@ class PoizController
     ========================================================= */
     private function uploadLogo(array $file): string
     {
+        // Vérification du type MIME autorisé
+        $allowedMimes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+        $mime = mime_content_type($file['tmp_name']);
+        if (!in_array($mime, $allowedMimes, true)) {
+            throw new \RuntimeException('Type de fichier non autorisé : ' . $mime);
+        }
+
         $dir = ROOT_PATH . '/public/uploads/poiz/';
 
+        // Création du dossier si absent
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            if (!mkdir($dir, 0775, true) && !is_dir($dir)) {
+                throw new \RuntimeException('Impossible de créer le dossier uploads : ' . $dir);
+            }
+        }
+
+        // Vérification que le dossier est accessible en écriture
+        if (!is_writable($dir)) {
+            throw new \RuntimeException(
+                'Le dossier uploads n\'est pas accessible en écriture : ' . $dir .
+                ' — Relancez le container pour appliquer les permissions (entrypoint.sh).'
+            );
         }
 
         $name = uniqid() . '_' . basename($file['name']);
-        move_uploaded_file($file['tmp_name'], $dir . $name);
+        $dest = $dir . $name;
+
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            throw new \RuntimeException('Échec du déplacement du fichier uploadé vers : ' . $dest);
+        }
 
         return '/uploads/poiz/' . $name;
     }

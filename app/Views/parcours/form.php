@@ -43,7 +43,10 @@ $isEdit = isset($parcours);
                 id="poizSelect"
                 required
                 class="<?= $fieldClass ?>">
-            <?php foreach ($poiz as $z): ?>
+            <?php foreach ($poiz as $z):
+                // Zaméla (id=32) n'est pas disponible dans l'onglet Parcours
+                if ((int)$z['id'] === 32) continue;
+            ?>
                 <option value="<?= (int)$z['id'] ?>"
                         data-nom="<?= htmlspecialchars($z['nom']) ?>"
                         data-logo="<?= htmlspecialchars($z['logo'] ?? '') ?>"
