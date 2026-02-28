@@ -88,19 +88,18 @@ foreach ($files as $file) {
     }
 
     try {
-        $pdo->beginTransaction();
+        // Les DDL (CREATE TABLE, ALTER TABLE...) causent un commit implicite dans MariaDB.
+        // On evite les transactions pour ne pas avoir "There is no active transaction".
         $pdo->exec($sql);
 
         $insert = $pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
         $insert->execute([$name]);
-
-        $pdo->commit();
         echo "[migrate] ✅  $name exécuté avec succès\n";
         $ran++;
     } catch (PDOException $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
+        try {
+            if ($pdo->inTransaction()) { $pdo->rollBack(); }
+        } catch (PDOException $re) { /* DDL auto-commit, ignore */ }
         echo "[migrate] ❌  $name ÉCHEC : " . $e->getMessage() . "\n";
         exit(1);
     }
