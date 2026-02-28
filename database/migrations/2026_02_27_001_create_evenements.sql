@@ -1,3 +1,8 @@
+-- ============================================================
+--  Migration : création des tables événements
+--  Date : 2026-02-27
+-- ============================================================
+
 CREATE TABLE IF NOT EXISTS `evenements` (
   `id`               INT(11)      NOT NULL AUTO_INCREMENT,
   `nom`              VARCHAR(255) NOT NULL,
@@ -11,6 +16,8 @@ CREATE TABLE IF NOT EXISTS `evenements` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `evenement_effectues` (
   `id`               INT(11)  NOT NULL AUTO_INCREMENT,
   `user_id`          INT(11)  NOT NULL,
@@ -22,6 +29,8 @@ CREATE TABLE IF NOT EXISTS `evenement_effectues` (
   KEY `fk_ee_event` (`evenement_id`),
   CONSTRAINT `fk_ee_event` FOREIGN KEY (`evenement_id`) REFERENCES `evenements` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `evenement_parcours` (
   `id`            INT(11)      NOT NULL AUTO_INCREMENT,
@@ -36,6 +45,8 @@ CREATE TABLE IF NOT EXISTS `evenement_parcours` (
   KEY `fk_ep_evenement` (`evenement_id`),
   CONSTRAINT `fk_ep_evenement` FOREIGN KEY (`evenement_id`) REFERENCES `evenements` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `evenement_parcours_effectues` (
   `id`                    INT(11)  NOT NULL AUTO_INCREMENT,
