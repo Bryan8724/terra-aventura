@@ -23,8 +23,8 @@ function evFormatDate(?string $d): string {
 .ev-card.done{border-left:4px solid #ea580c}
 .ev-card.active-now{border-left:4px solid #16a34a}
 .ev-card.expired{border-left:4px solid #94a3b8;opacity:.75}
-.ev-banner{height:120px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden}
-.ev-banner img{width:100%;height:100%;object-fit:cover}
+.ev-banner{width:100%;aspect-ratio:16/9;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative;overflow:hidden}
+.ev-banner img{width:100%;height:100%;object-fit:cover;object-position:center}
 .ev-status{position:absolute;top:.5rem;right:.5rem;padding:.2rem .65rem;border-radius:9999px;font-size:.7rem;font-weight:700}
 .ev-status.active{background:#dcfce7;color:#15803d}
 .ev-status.expired{background:#f1f5f9;color:#64748b}
@@ -105,7 +105,9 @@ function evFormatDate(?string $d): string {
                     <div class="flex items-center gap-2">
                         <!-- Bouton validation participation -->
                         <?php if ($isDone): ?>
-                            <form method="post" action="/evenement/reset" onsubmit="return confirm('Retirer votre participation ?')">
+                            <form method="post" action="/evenement/reset"
+                                  data-confirm="Retirer votre participation ?"
+                                  data-confirm-icon="🎉" data-confirm-ok="Retirer" data-confirm-color="#ea580c">
                                 <input type="hidden" name="evenement_id" value="<?= $ev['id'] ?>">
                                 <button type="submit" class="btn-ev done">🎉 Participé</button>
                             </form>
@@ -120,7 +122,9 @@ function evFormatDate(?string $d): string {
                         <?php if ($isAdmin): ?>
                             <a href="/evenement/edit?id=<?= $ev['id'] ?>" class="admin-btn edit">✏️</a>
                             <form method="post" action="/evenement/delete"
-                                  onsubmit="return confirm('Supprimer cet événement ?')">
+                                  data-confirm="Supprimer cet événement ?"
+                                  data-confirm-icon="🗑️" data-confirm-sub="Cette action est irréversible."
+                                  data-confirm-ok="Supprimer">>
                                 <input type="hidden" name="id" value="<?= $ev['id'] ?>">
                                 <button type="submit" class="admin-btn del">🗑</button>
                             </form>

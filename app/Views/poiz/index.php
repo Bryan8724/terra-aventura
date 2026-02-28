@@ -131,7 +131,7 @@ $isAdmin = isset($user['role']) && $user['role'] === 'admin';
                             <a href="/poiz/edit?id=<?= (int)$p['id'] ?>" class="btn-edit">✏️ Modifier</a>
                             <?php if ($nbParcours === 0): ?>
                                 <form method="post" action="/poiz/delete"
-                                      onsubmit="return confirm('Supprimer « <?= htmlspecialchars(addslashes($p['nom'])) ?> » ?')">
+                                      data-confirm="Supprimer ce POIZ ?" data-confirm-icon="🗑️" data-confirm-sub="Cette action est irréversible." data-confirm-ok="Supprimer">
                                     <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
                                     <button type="submit" class="btn-delete w-full">🗑 Supprimer</button>
                                 </form>

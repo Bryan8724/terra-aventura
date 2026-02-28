@@ -296,7 +296,11 @@ document.addEventListener("DOMContentLoaded", function () {
         pollInterval=setInterval(async()=>{ try{ const res=await fetch("/deploy-status"); const data=await res.json(); updateProgress(data.status??"idle",data.progress??0); }catch(e){} },2000);
     }
     deployBtn.addEventListener("click", async function() {
-        if(!confirm("⚠️ Déployer vers la PROD ?\n\nLe code sera commité et poussé sur git avant le déploiement.")) return;
+        const ok = await taConfirm("Déployer vers la PROD ?", {
+            sub: "Le code sera commité et poussé sur git avant le déploiement.",
+            icon: "🚀", okLabel: "Déployer", okColor: "#dc2626"
+        });
+        if (!ok) return;
         openModal();
         try {
             const formData=new FormData(); formData.append("csrf_token",csrfToken); formData.append("commit_message",commitInput?.value?.trim()??"");

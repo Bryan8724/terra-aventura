@@ -144,7 +144,7 @@ function zFormatDate(?string $d): string {
                 <?php if ($isDone): ?>
                     <button class="btn-z done">⚡ Effectué</button>
                     <form method="post" action="/parcours/reset"
-                          onsubmit="return confirm('Réinitialiser ce Zaméla ?')">
+                          data-confirm="Réinitialiser ce Zaméla ?" data-confirm-icon="⚡" data-confirm-ok="Réinitialiser" data-confirm-color="#7c3aed">
                         <input type="hidden" name="parcours_id" value="<?= (int)$z['id'] ?>">
                         <input type="hidden" name="redirect" value="/zamela">
                         <button type="submit" class="admin-btn delete" title="Réinitialiser">↺</button>
@@ -160,7 +160,7 @@ function zFormatDate(?string $d): string {
                 <?php if ($isAdmin): ?>
                     <a href="/zamela/edit?id=<?= (int)$z['id'] ?>" class="admin-btn edit" title="Modifier">✏️</a>
                     <form method="post" action="/zamela/delete"
-                          onsubmit="return confirm('Supprimer « <?= htmlspecialchars(addslashes($z['titre'])) ?> » ?')">
+                          data-confirm="Supprimer ce Zaméla ?" data-confirm-icon="🗑️" data-confirm-sub="Cette action est irréversible." data-confirm-ok="Supprimer">
                         <input type="hidden" name="id" value="<?= (int)$z['id'] ?>">
                         <button type="submit" class="admin-btn delete" title="Supprimer">🗑</button>
                     </form>

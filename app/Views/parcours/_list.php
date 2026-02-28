@@ -203,7 +203,7 @@ $niveauLabel = fn($n) => match((int)$n) {
                         <?php if ($isAdmin): ?>
                             <a href="/parcours/edit?id=<?= (int)$p['id'] ?>" class="admin-btn edit" title="Modifier">✏️</a>
                             <form method="post" action="/parcours/delete"
-                                  onsubmit="return confirm('Supprimer « <?= htmlspecialchars(addslashes($p['titre'])) ?> » ?')">
+                                  data-confirm="Supprimer ce parcours ?" data-confirm-icon="🗑️" data-confirm-sub="Cette action est irréversible." data-confirm-ok="Supprimer">
                                 <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
                                 <button type="submit" class="admin-btn delete" title="Supprimer">🗑</button>
                             </form>

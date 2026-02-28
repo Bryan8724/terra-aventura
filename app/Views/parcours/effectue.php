@@ -175,6 +175,6 @@ function resetParcours() {
         body: JSON.stringify({ parcours_id: <?= (int)$_GET['id'] ?> })
     })
     .then(() => window.location.href = '/parcours')
-    .catch(() => alert("Erreur lors de l'annulation"));
+    .catch(() => taAlert("Erreur lors de l'annulation", { icon: '❌', type: 'error' }));
 }
 </script>

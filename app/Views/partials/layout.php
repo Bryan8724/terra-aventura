@@ -216,6 +216,128 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
 
 <script src="/js/toast.js" defer></script>
 
+<!-- ===== MODAL DE CONFIRMATION GLOBAL ===== -->
+<div id="ta-confirm-overlay"
+     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);
+            align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:1.25rem;box-shadow:0 20px 60px rgba(0,0,0,.25);
+                padding:2rem;width:100%;max-width:420px;margin:1rem;animation:taSlideIn .18s ease">
+        <div id="ta-confirm-icon" style="font-size:2.2rem;text-align:center;margin-bottom:.75rem"></div>
+        <p id="ta-confirm-msg"
+           style="font-size:1rem;font-weight:600;color:#1e293b;text-align:center;margin:0 0 .5rem"></p>
+        <p id="ta-confirm-sub"
+           style="font-size:.85rem;color:#64748b;text-align:center;margin:0 0 1.5rem"></p>
+        <div style="display:flex;gap:.75rem;justify-content:center">
+            <button id="ta-confirm-cancel"
+                    style="padding:.6rem 1.4rem;border-radius:.75rem;border:1.5px solid #e2e8f0;
+                           background:#f8fafc;color:#475569;font-weight:600;font-size:.875rem;cursor:pointer;">
+                Annuler
+            </button>
+            <button id="ta-confirm-ok"
+                    style="padding:.6rem 1.4rem;border-radius:.75rem;border:none;
+                           background:#dc2626;color:#fff;font-weight:600;font-size:.875rem;cursor:pointer;">
+                Confirmer
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL D'ALERTE GLOBAL ===== -->
+<div id="ta-alert-overlay"
+     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);
+            align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:1.25rem;box-shadow:0 20px 60px rgba(0,0,0,.25);
+                padding:2rem;width:100%;max-width:380px;margin:1rem;animation:taSlideIn .18s ease">
+        <div id="ta-alert-icon" style="font-size:2.2rem;text-align:center;margin-bottom:.75rem"></div>
+        <p id="ta-alert-msg"
+           style="font-size:1rem;font-weight:600;color:#1e293b;text-align:center;margin:0 0 1.5rem"></p>
+        <button id="ta-alert-ok"
+                style="display:block;width:100%;padding:.65rem;border-radius:.75rem;border:none;
+                       background:#3b82f6;color:#fff;font-weight:600;font-size:.875rem;cursor:pointer;">
+            OK
+        </button>
+    </div>
+</div>
+
+<style>
+@keyframes taSlideIn {
+    from { opacity:0; transform:scale(.94) translateY(8px); }
+    to   { opacity:1; transform:scale(1)   translateY(0); }
+}
+</style>
+
+<script>
+/* ---- Utilitaires modal Terra Aventura ---- */
+
+/** Remplace window.confirm() — retourne une Promise<boolean> */
+function taConfirm(msg, {sub = '', icon = '⚠️', okLabel = 'Confirmer', okColor = '#dc2626'} = {}) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('ta-confirm-overlay');
+        document.getElementById('ta-confirm-icon').textContent = icon;
+        document.getElementById('ta-confirm-msg').textContent  = msg;
+        document.getElementById('ta-confirm-sub').textContent  = sub;
+        const okBtn = document.getElementById('ta-confirm-ok');
+        okBtn.textContent        = okLabel;
+        okBtn.style.background   = okColor;
+        overlay.style.display    = 'flex';
+
+        function cleanup(result) {
+            overlay.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            document.getElementById('ta-confirm-cancel').removeEventListener('click', onCancel);
+            resolve(result);
+        }
+        function onOk()     { cleanup(true);  }
+        function onCancel() { cleanup(false); }
+
+        okBtn.addEventListener('click', onOk);
+        document.getElementById('ta-confirm-cancel').addEventListener('click', onCancel);
+    });
+}
+
+/** Remplace window.alert() — retourne une Promise */
+function taAlert(msg, {icon = 'ℹ️', type = 'info'} = {}) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('ta-alert-overlay');
+        const okBtn   = document.getElementById('ta-alert-ok');
+        document.getElementById('ta-alert-icon').textContent = icon;
+        document.getElementById('ta-alert-msg').textContent  = msg;
+
+        const colors = { error:'#dc2626', success:'#16a34a', info:'#3b82f6', warning:'#d97706' };
+        okBtn.style.background = colors[type] ?? colors.info;
+        overlay.style.display  = 'flex';
+
+        function onOk() {
+            overlay.style.display = 'none';
+            okBtn.removeEventListener('click', onOk);
+            resolve();
+        }
+        okBtn.addEventListener('click', onOk);
+    });
+}
+
+/* ---- Interception globale des formulaires avec data-confirm ---- */
+document.addEventListener('submit', async function(e) {
+    const form = e.target;
+    const msg  = form.dataset.confirm;
+    if (!msg) return; // pas de confirmation requise
+
+    e.preventDefault();
+
+    const icon     = form.dataset.confirmIcon     ?? '🗑️';
+    const sub      = form.dataset.confirmSub      ?? '';
+    const okLabel  = form.dataset.confirmOk       ?? 'Confirmer';
+    const okColor  = form.dataset.confirmColor    ?? '#dc2626';
+
+    const ok = await taConfirm(msg, { sub, icon, okLabel, okColor });
+    if (ok) {
+        // Désactiver l'interception pour ce submit et soumettre
+        form.removeAttribute('data-confirm');
+        form.submit();
+    }
+});
+</script>
+
 <script>
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('-translate-x-full');

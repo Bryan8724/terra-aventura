@@ -71,8 +71,9 @@
 
                                 <form method="post"
                                       action="/admin/users/delete"
-                                      onsubmit="return confirm('Supprimer cet utilisateur ?');">
-                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                                      data-confirm="Supprimer cet utilisateur ?"
+                                      data-confirm-icon="👤" data-confirm-sub="Cette action est irréversible."
+                                      data-confirm-ok="Supprimer">                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
                                     <button class="text-red-600 hover:underline">
                                         Supprimer
                                     </button>
