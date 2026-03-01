@@ -184,6 +184,20 @@ $router->post('/admin/users/delete', ['AdminUserController', 'delete']);
 
 /*
 |--------------------------------------------------------------------------
+| STOCK — Badges POIZ
+|--------------------------------------------------------------------------
+*/
+
+$router->get('/stock', ['StockController', 'index']);
+$router->post('/stock/update', ['StockController', 'update']);
+
+// API mobile
+$router->get('/api/stock', ['StockController', 'index']);
+$router->post('/api/stock/update', ['StockController', 'update']);
+
+
+/*
+|--------------------------------------------------------------------------
 | USER PROFILE
 |--------------------------------------------------------------------------
 */

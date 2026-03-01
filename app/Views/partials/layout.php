@@ -179,6 +179,7 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
                 echo navLink('/stats', '📊', 'Statistiques', 'stats', $section);
                 echo navLink('/maintenance', '🛠️', 'Maintenance', 'maintenance', $section);
                 echo navLink($quetesUrl, '🎯', 'Quêtes', 'quetes', $section);
+                echo navLink('/stock', '🏅', 'Stock Badges', 'stock', $section);
                 ?>
 
                 <?php if ($isAdmin): ?>
@@ -426,6 +427,7 @@ $_taSections = [
     ['href' => '/stats',        'icon' => '📈', 'label' => 'Stats',        'name' => 'stats'],
     ['href' => '/maintenance',  'icon' => '🛠️', 'label' => 'Maintenance',  'name' => 'maintenance'],
     ['href' => $quetesUrl,      'icon' => '🎯', 'label' => 'Quêtes',       'name' => 'quetes'],
+    ['href' => '/stock',        'icon' => '🏅', 'label' => 'Stock',        'name' => 'stock'],
 ];
 if ($isAdmin) {
     $_taSections[] = ['href' => '/admin/messages', 'icon' => '💬', 'label' => 'Messages',     'name' => 'messages'];
