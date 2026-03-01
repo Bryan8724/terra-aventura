@@ -106,21 +106,16 @@ require_once ROOT_PATH . '/Core/Autoloader.php';
 |--------------------------------------------------------------------------
 | GLOBAL ERROR HANDLING
 |--------------------------------------------------------------------------
-| ✅ FIX : les erreurs non gérées affichent désormais une page HTML propre
-|          via ErrorPage::render() au lieu de "Une erreur est survenue."
-|          En mode API → JSON structuré. En mode dev → trace complète affichée.
 */
 
 use Core\ErrorPage;
 
 set_error_handler(function (int $severity, string $message, string $file, int $line): bool {
 
-    // Respecter l'opérateur @ (suppression d'erreurs)
     if (error_reporting() === 0) {
         return false;
     }
 
-    // Convertir les erreurs PHP en exceptions pour qu'elles remontent
     throw new ErrorException($message, 0, $severity, $file, $line);
 });
 
@@ -128,29 +123,27 @@ set_exception_handler(function (\Throwable $e) use ($env): void {
 
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 
-    // ✅ FIX : version API → JSON structuré avec détail en dev
     if (str_starts_with($uri, '/api/')) {
 
         while (ob_get_level() > 0) ob_end_clean();
         http_response_code(500);
         header('Content-Type: application/json');
 
-        $payload = ['success' => false, 'message' => 'Erreur serveur interne'];
-
-        if ($env === 'dev') {
-            $payload['debug'] = [
+        $payload = [
+            'success' => false,
+            'message' => 'Erreur serveur interne',
+            'debug'   => [
                 'exception' => get_class($e),
                 'message'   => $e->getMessage(),
                 'file'      => $e->getFile(),
                 'line'      => $e->getLine(),
-            ];
-        }
+            ],
+        ];
 
         echo json_encode($payload);
         exit;
     }
 
-    // ✅ FIX : version web → page HTML propre au lieu de "Une erreur est survenue."
     ErrorPage::render(500, null, $e);
 });
 
