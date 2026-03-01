@@ -14,6 +14,9 @@ $isEdit = isset($parcours);
     <?php if ($isEdit): ?>
         <input type="hidden" name="id" value="<?= (int)$parcours['id'] ?>">
     <?php endif; ?>
+    <?php if (!$isEdit && !empty($fromArchived)): ?>
+        <input type="hidden" name="from_archived" value="1">
+    <?php endif; ?>
 
     <!-- TITRE -->
     <div>
@@ -151,9 +154,29 @@ $isEdit = isset($parcours);
             ← Retour
         </a>
 
-        <button class="px-6 py-2 <?= $isEdit ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700' ?> text-white rounded-lg text-sm">
-            <?= $isEdit ? 'Mettre à jour' : 'Créer le parcours' ?>
-        </button>
+        <div class="flex items-center gap-3">
+            <?php if ($isEdit && !empty($parcours['archived'])): ?>
+                <!-- Désarchiver depuis la fiche edit -->
+                <form method="post" action="/parcours/desarchiver" onsubmit="return confirm('Désarchiver ce parcours ?')">
+                    <input type="hidden" name="id" value="<?= (int)$parcours['id'] ?>">
+                    <button type="submit" class="px-5 py-2 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-sm hover:bg-amber-200">
+                        📤 Désarchiver
+                    </button>
+                </form>
+            <?php elseif ($isEdit): ?>
+                <!-- Archiver depuis la fiche edit -->
+                <form method="post" action="/parcours/archiver" onsubmit="return confirm('Archiver ce parcours ? Il ne sera plus visible dans la liste principale.')">
+                    <input type="hidden" name="id" value="<?= (int)$parcours['id'] ?>">
+                    <button type="submit" class="px-5 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-sm hover:bg-amber-100">
+                        📦 Archiver
+                    </button>
+                </form>
+            <?php endif; ?>
+
+            <button class="px-6 py-2 <?= $isEdit ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700' ?> text-white rounded-lg text-sm">
+                <?= $isEdit ? 'Mettre à jour' : 'Créer le parcours' ?>
+            </button>
+        </div>
     </div>
 </form>
 

@@ -1,218 +1,237 @@
-<h1 class="text-2xl font-bold mb-6">✏️ Modifier la quête</h1>
+<?php require __DIR__ . '/_form-styles.php'; ?>
+
+<!-- ── Breadcrumb ── -->
+<div class="flex items-center gap-2 text-sm text-slate-400 mb-6">
+    <a href="/admin/quetes" class="hover:text-indigo-600 transition">🎯 Quêtes</a>
+    <span>›</span>
+    <span class="text-slate-700 font-medium">Modifier — <?= htmlspecialchars((string)$quete['nom']) ?></span>
+</div>
+
+<!-- ── Titre ── -->
+<div class="flex items-center gap-3 mb-7">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600
+                flex items-center justify-center text-white text-lg shadow-md">
+        ✏️
+    </div>
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Modifier la quête</h1>
+        <p class="text-sm text-slate-400">
+            Modifiez les informations, objets et parcours associés
+        </p>
+    </div>
+</div>
 
 <form method="post"
       action="/admin/quetes/update"
       id="queteForm"
-      class="space-y-10">
+      class="space-y-5 max-w-3xl">
 
     <input type="hidden" name="id" value="<?= (int)$quete['id'] ?>">
 
-    <!-- =======================
-         QUÊTE
-    ======================== -->
-    <div class="bg-white rounded-lg shadow p-6 space-y-4 max-w-xl">
-        <div>
-            <label class="block font-medium mb-1">Nom de la quête</label>
-            <input type="text"
-                   name="nom"
-                   value="<?= htmlspecialchars((string)$quete['nom']) ?>"
-                   required
-                   class="w-full border rounded px-3 py-2">
+    <!-- ══════════ SECTION 1 — Infos quête ══════════ -->
+    <div class="form-section">
+        <div class="form-section-header">
+            <span class="text-base">🎯</span>
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Informations de la quête</h2>
         </div>
-
-        <div>
-            <label class="block font-medium mb-1">Saison</label>
-            <input type="text"
-                   name="saison"
-                   value="<?= htmlspecialchars((string)($quete['saison'] ?? '')) ?>"
-                   class="w-full border rounded px-3 py-2">
+        <div class="form-section-body grid sm:grid-cols-2 gap-4">
+            <div>
+                <label class="field-label" for="nom">Nom de la quête <span class="text-red-400">*</span></label>
+                <input type="text"
+                       id="nom"
+                       name="nom"
+                       required
+                       value="<?= htmlspecialchars((string)$quete['nom']) ?>"
+                       class="field-input">
+            </div>
+            <div>
+                <label class="field-label" for="saison">Saison</label>
+                <input type="text"
+                       id="saison"
+                       name="saison"
+                       value="<?= htmlspecialchars((string)($quete['saison'] ?? '')) ?>"
+                       placeholder="Facultatif"
+                       class="field-input">
+                <p class="field-hint">Laissez vide si la quête n'est pas liée à une saison.</p>
+            </div>
         </div>
     </div>
 
-    <!-- =======================
-         OBJETS
-    ======================== -->
-    <div class="space-y-4 max-w-5xl">
-        <div class="flex justify-between items-center">
-            <h2 class="text-lg font-semibold">🎒 Objets de la quête</h2>
-
+    <!-- ══════════ SECTION 2 — Objets ══════════ -->
+    <div class="form-section">
+        <div class="form-section-header justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-base">🎒</span>
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Objets de la quête</h2>
+            </div>
             <button type="button"
                     onclick="addObjet()"
-                    class="text-blue-600 text-sm font-medium">
+                    class="btn-add-objet">
                 ➕ Ajouter un objet
             </button>
         </div>
 
-        <div id="objetsContainer" class="space-y-4">
-            <?php
-            $index = 0;
-            $grouped = [];
-
-            foreach ($objets as $row) {
-                $oid = (int)$row['objet_id'];
-
-                $grouped[$oid]['id']  = $oid;
-                $grouped[$oid]['nom'] = $row['objet_nom'];
-
-                if (!empty($row['parcours_id'])) {
-                    $grouped[$oid]['parcours'][] = $row;
-                }
+        <div id="objetsContainer" class="p-4 space-y-3">
+        <?php
+        /* ── Reconstruction des objets groupés ── */
+        $index   = 0;
+        $grouped = [];
+        foreach ($objets as $row) {
+            $oid = (int)$row['objet_id'];
+            $grouped[$oid]['id']  = $oid;
+            $grouped[$oid]['nom'] = $row['objet_nom'];
+            if (!empty($row['parcours_id'])) {
+                $grouped[$oid]['parcours'][] = $row;
             }
-            ?>
+        }
+        ?>
+        <?php foreach ($grouped as $objet):
+            $nbParcours = count($objet['parcours'] ?? []);
+        ?>
 
-            <?php foreach ($grouped as $objet): ?>
+        <div class="objet-card" data-objet="<?= $index ?>">
 
-                <div class="bg-white border rounded-xl p-4 space-y-4"
-                     data-objet="<?= $index ?>">
+            <div class="objet-card-header">
+                <span class="objet-number"><?= $index + 1 ?></span>
 
-                    <input type="hidden"
-                           name="objets[<?= $index ?>][id]"
-                           value="<?= (int)$objet['id'] ?>">
+                <input type="hidden"
+                       name="objets[<?= $index ?>][id]"
+                       value="<?= (int)$objet['id'] ?>">
 
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex-1">
-                            <input type="text"
-                                   name="objets[<?= $index ?>][nom]"
-                                   value="<?= htmlspecialchars((string)$objet['nom']) ?>"
-                                   required
-                                   class="w-full border rounded px-3 py-2">
-                        </div>
+                <input type="text"
+                       name="objets[<?= $index ?>][nom]"
+                       value="<?= htmlspecialchars((string)$objet['nom']) ?>"
+                       required
+                       placeholder="Nom de l'objet"
+                       class="objet-name-input"
+                       oninput="updateSaveBtn()">
 
-                        <div class="flex items-center gap-3 shrink-0">
-                            <span class="badge-<?= $index ?> text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
-                                <?= count($objet['parcours'] ?? []) ?> parcours
-                            </span>
+                <span class="badge-parcours badge-<?= $index ?> <?= $nbParcours > 0 ? 'badge-has' : '' ?>">
+                    <?= $nbParcours ?> parcours
+                </span>
 
-                            <button type="button"
-                                    onclick="confirmDeleteObjet(<?= $index ?>)"
-                                    class="text-red-600 hover:text-red-800"
-                                    title="Supprimer l’objet">
-                                🗑
-                            </button>
-                        </div>
-                    </div>
+                <button type="button"
+                        onclick="confirmDeleteObjet(<?= $index ?>)"
+                        class="objet-delete-btn"
+                        title="Supprimer cet objet">
+                    🗑
+                </button>
+            </div>
 
-                    <div class="parcours-list space-y-2 pl-3">
-                        <?php foreach ($objet['parcours'] ?? [] as $p): ?>
-                            <div class="flex items-center justify-between gap-3 bg-gray-50 border rounded-lg p-2">
-                                <div class="flex items-center gap-3">
-                                    <?php if (!empty($p['logo'])): ?>
-                                        <img src="<?= htmlspecialchars($p['logo']) ?>"
-                                             class="w-8 h-8 object-contain">
-                                    <?php endif; ?>
+            <!-- Liste parcours -->
+            <div class="parcours-list">
+            <?php foreach ($objet['parcours'] ?? [] as $p): ?>
+                <div class="parcours-item-row">
+                    <?php if (!empty($p['logo'])): ?>
+                        <img src="<?= htmlspecialchars($p['logo']) ?>"
+                             alt="" loading="lazy"
+                             class="parcours-item-logo">
+                    <?php else: ?>
+                        <div class="parcours-item-logo-ph">📍</div>
+                    <?php endif; ?>
 
-                                    <div class="leading-tight">
-                                        <strong><?= htmlspecialchars($p['titre']) ?></strong><br>
-                                        <span class="text-xs text-gray-600">
-                                            <?= htmlspecialchars($p['ville']) ?>
-                                            (<?= htmlspecialchars($p['departement_code']) ?>)
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <button type="button"
-                                        onclick="removeParcours(this)"
-                                        class="text-red-600 hover:text-red-800 text-sm">
-                                    ✖
-                                </button>
-
-                                <input type="hidden"
-                                       name="objets[<?= $index ?>][parcours][]"
-                                       value="<?= (int)$p['parcours_id'] ?>">
-                            </div>
-                        <?php endforeach; ?>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-slate-700 truncate">
+                            <?= htmlspecialchars($p['titre']) ?>
+                        </p>
+                        <p class="text-xs text-slate-400">
+                            <?= htmlspecialchars($p['ville']) ?>
+                            (<?= htmlspecialchars($p['departement_code']) ?>)
+                        </p>
                     </div>
 
                     <button type="button"
-                            onclick="openParcoursModal(<?= $index ?>)"
-                            class="text-blue-600 text-sm font-medium">
-                        ➕ Ajouter un parcours
-                    </button>
-                </div>
+                            onclick="removeParcours(this)"
+                            class="parcours-remove-btn"
+                            title="Retirer ce parcours">✕</button>
 
-                <?php $index++; ?>
+                    <input type="hidden"
+                           name="objets[<?= $index ?>][parcours][]"
+                           value="<?= (int)$p['parcours_id'] ?>">
+                </div>
             <?php endforeach; ?>
+            </div>
+
+            <button type="button"
+                    onclick="openParcoursModal(<?= $index ?>)"
+                    class="add-parcours-btn">
+                <span>➕</span> Ajouter un parcours
+            </button>
+        </div>
+
+        <?php $index++; endforeach; ?>
         </div>
     </div>
 
-    <!-- =======================
-         ACTIONS
-    ======================== -->
-    <div class="flex justify-between max-w-5xl pt-6">
-        <a href="/admin/quetes" class="text-gray-600 underline">
-            Annuler
+    <!-- ══════════ ACTIONS ══════════ -->
+    <div class="flex items-center justify-between pt-2">
+        <a href="/admin/quetes" class="btn-secondary">
+            ← Annuler
         </a>
-
         <button type="submit"
                 id="saveBtn"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
-            Enregistrer les modifications
+                class="btn-primary btn-primary-blue"
+                disabled>
+            💾 Enregistrer les modifications
         </button>
     </div>
+
 </form>
 
-<!-- =======================
-     MODAL PARCOURS
-======================== -->
+<!-- Modals -->
 <?php require __DIR__ . '/_modal-parcours.php'; ?>
 
-<!-- =======================
-     MODAL SUPPRESSION OBJET
-======================== -->
+<!-- Modal suppression objet -->
 <div id="deleteObjetModal"
-     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-sm space-y-4">
-        <h3 class="font-semibold text-lg">Supprimer l’objet</h3>
-        <p class="text-sm text-gray-600">
-            Cet objet et ses parcours seront retirés de la quête.
-        </p>
-
-        <div class="flex justify-end gap-3">
-            <button type="button"
-                    onclick="closeDeleteObjetModal()"
-                    class="px-3 py-1 border rounded">
-                Annuler
-            </button>
-
-            <button type="button"
-                    id="confirmDeleteObjetBtn"
-                    class="px-3 py-1 bg-red-600 text-white rounded">
-                Supprimer
+     class="fixed inset-0 z-50"
+     style="display:none;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+    <div class="modal-box" style="max-width:400px">
+        <div class="modal-header">
+            <div>
+                <h3 class="text-base font-bold text-slate-800">🗑 Supprimer l'objet</h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    "<span id="deleteObjetName" class="font-semibold text-slate-600"></span>"
+                </p>
+            </div>
+            <button type="button" onclick="closeDeleteObjetModal()" class="modal-close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="text-sm text-slate-600">
+                Cet objet et tous ses parcours associés seront supprimés de la quête. Cette action est irréversible.
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="closeDeleteObjetModal()" class="btn-secondary">Annuler</button>
+            <button type="button" id="confirmDeleteObjetBtn"
+                    class="btn-primary" style="background:#dc2626;box-shadow:0 2px 8px rgba(220,38,38,.25)">
+                🗑 Supprimer
             </button>
         </div>
     </div>
 </div>
 
-<!-- =======================
-     MODAL CONFIRMATION SAUVEGARDE
-======================== -->
+<!-- Modal confirmation modifications -->
 <div id="confirmSaveModal"
-     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 w-full max-w-lg space-y-4">
-        <h3 class="font-semibold text-lg">Confirmer les modifications</h3>
-
-        <p class="text-sm text-gray-600">
-            Voici un récapitulatif des changements détectés :
-        </p>
-
-        <div id="saveSummary"
-             class="space-y-2 text-sm max-h-64 overflow-auto border rounded p-3 bg-gray-50">
+     class="fixed inset-0 z-50"
+     style="display:none;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+    <div class="modal-box" style="max-width:480px">
+        <div class="modal-header">
+            <div>
+                <h3 class="text-base font-bold text-slate-800">💾 Confirmer les modifications</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Récapitulatif des changements détectés</p>
+            </div>
+            <button type="button" onclick="closeConfirmSaveModal()" class="modal-close-btn">✕</button>
         </div>
-
-        <div class="flex justify-end gap-3 pt-4">
-            <button type="button"
-                    onclick="closeConfirmSaveModal()"
-                    class="px-4 py-2 border rounded">
-                Annuler
-            </button>
-
-            <button type="button"
-                    id="confirmSaveBtn"
-                    class="px-4 py-2 bg-blue-600 text-white rounded">
-                Confirmer et enregistrer
+        <div class="modal-body">
+            <div id="saveSummary" class="space-y-2"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="closeConfirmSaveModal()" class="btn-secondary">Annuler</button>
+            <button type="button" id="confirmSaveBtn" class="btn-primary btn-primary-blue">
+                💾 Confirmer et enregistrer
             </button>
         </div>
     </div>
 </div>
 
-<script src="/js/admin-quetes.js" defer></script>
+<script src="/js/admin-quetes.js"></script>

@@ -6,6 +6,7 @@ use Core\Database;
 use Core\Response;
 use Core\ApiAuth;
 use Core\ErrorPage;
+use Core\Toast;
 
 class AdminUserController
 {
@@ -65,6 +66,56 @@ class AdminUserController
 
         ob_start();
         require VIEW_PATH . '/admin/users/index.php';
+        $content = ob_get_clean();
+
+        require VIEW_PATH . '/partials/layout.php';
+    }
+
+    /* =========================
+       CREATE
+    ========================= */
+    public function create(): void
+    {
+        $this->requireAdmin();
+
+        $title = 'Créer un utilisateur';
+
+        ob_start();
+        require VIEW_PATH . '/admin/users/form.php';
+        $content = ob_get_clean();
+
+        require VIEW_PATH . '/partials/layout.php';
+    }
+
+    /* =========================
+       EDIT
+    ========================= */
+    public function edit(): void
+    {
+        $this->requireAdmin();
+
+        $id = (int)($_GET['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Utilisateur introuvable');
+            header('Location: /admin/users');
+            exit;
+        }
+
+        $stmt = Database::getInstance()->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt->execute([$id]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            Toast::add('error', 'Utilisateur introuvable');
+            header('Location: /admin/users');
+            exit;
+        }
+
+        $title = 'Modifier l\'utilisateur';
+
+        ob_start();
+        require VIEW_PATH . '/admin/users/form.php';
         $content = ob_get_clean();
 
         require VIEW_PATH . '/partials/layout.php';

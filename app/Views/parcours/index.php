@@ -7,6 +7,7 @@ $activeSearch      = trim($_GET['search'] ?? '');
 $activeDept        = $_GET['departement'] ?? [];
 $activePoiz        = $_GET['poiz_id'] ?? '';
 $activeEffectues   = isset($_GET['effectues']);
+$activeArchived    = isset($_GET['archived']);
 
 $hasFilters = $activeSearch !== '' || !empty($activeDept) || $activePoiz !== '' || $activeEffectues;
 ?>
@@ -62,16 +63,45 @@ $hasFilters = $activeSearch !== '' || !empty($activeDept) || $activePoiz !== '' 
 <!-- HEADER -->
 <div class="flex justify-between items-center mb-6">
     <div>
-        <h1 class="text-2xl font-semibold text-gray-800">Parcours</h1>
-        <p class="text-sm text-gray-500">Liste des parcours disponibles et effectués</p>
+        <h1 class="text-2xl font-semibold text-gray-800">
+            <?= $activeArchived ? '📦 Parcours archivés' : 'Parcours' ?>
+        </h1>
+        <p class="text-sm text-gray-500">
+            <?= $activeArchived
+                ? 'Parcours des saisons passées — consultables et validables'
+                : 'Liste des parcours disponibles et effectués' ?>
+        </p>
     </div>
-    <?php if ($isAdmin): ?>
-        <a href="/parcours/create"
-           class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 shadow-sm transition">
-            ➕ Ajouter
-        </a>
-    <?php endif; ?>
+    <div class="flex items-center gap-2">
+        <?php if ($isAdmin): ?>
+            <!-- Tab Parcours archivés -->
+            <a href="<?= $activeArchived ? '/parcours' : '/parcours?archived=1' ?>"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                      <?= $activeArchived
+                          ? 'bg-amber-600 text-white shadow-sm hover:bg-amber-700'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100' ?>">
+                📦 Archivés
+            </a>
+            <a href="/parcours/create<?= $activeArchived ? '?from_archived=1' : '' ?>"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-sm transition
+                      <?= $activeArchived
+                          ? 'bg-amber-600 text-white hover:bg-amber-700'
+                          : 'bg-blue-600 text-white hover:bg-blue-700' ?>">
+                ➕ <?= $activeArchived ? 'Ajouter un archivé' : 'Ajouter' ?>
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
+
+<?php if ($activeArchived): ?>
+<div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
+    <span class="text-2xl">📦</span>
+    <div>
+        <p class="text-sm font-semibold text-amber-800">Mode Parcours archivés</p>
+        <p class="text-xs text-amber-700">Ces parcours ne sont plus actifs. Vous pouvez les valider rétroactivement ou les désarchiver.</p>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- BARRE RECHERCHE + FILTRES -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
@@ -205,6 +235,7 @@ const state = {
     departement: <?= json_encode(is_array($activeDept) ? ($activeDept[0] ?? '') : ($activeDept ?? '')) ?>,
     poiz_id:     <?= json_encode($activePoiz) ?>,
     effectues:   <?= json_encode($activeEffectues) ?>,
+    archived:    <?= json_encode($activeArchived) ?>,
 };
 
 const container = document.getElementById('parcoursContainer');
@@ -216,6 +247,7 @@ function buildParams() {
     if (state.departement) p.set('departement[]', state.departement);
     if (state.poiz_id)     p.set('poiz_id', state.poiz_id);
     if (state.effectues)   p.set('effectues', '1');
+    if (state.archived)    p.set('archived', '1');
     p.set('ajax', '1');
     return p.toString();
 }

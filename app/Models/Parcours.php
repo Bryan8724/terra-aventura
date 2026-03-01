@@ -56,6 +56,21 @@ class Parcours
             $sql .= " AND p.poiz_id != " . self::ZAMELA_POIZ_ID;
         }
 
+        /* ===== FILTRE ARCHIVÉ ===== */
+        if (!empty($filters['archived_only'])) {
+            $sql .= " AND p.archived = 1";
+        } else {
+            $sql .= " AND p.archived = 0";
+        }
+
+        /* ===== FILTRE EXPIRÉS (pour Zaméla expirés) ===== */
+        if (!empty($filters['expired_only'])) {
+            $sql .= " AND p.date_fin IS NOT NULL AND p.date_fin < CURDATE()";
+        } elseif (!empty($filters['zamela_only']) && empty($filters['include_expired'])) {
+            // Zaméla actifs : exclure les expirés
+            $sql .= " AND (p.date_fin IS NULL OR p.date_fin >= CURDATE())";
+        }
+
         /* ===== FILTRE EFFECTUÉS ===== */
         if (!empty($filters['effectues'])) {
             $sql .= " AND pe.parcours_id IS NOT NULL";
@@ -132,6 +147,20 @@ class Parcours
             $sql .= " AND p.poiz_id != " . self::ZAMELA_POIZ_ID;
         }
 
+        /* ===== FILTRE ARCHIVÉ ===== */
+        if (!empty($filters['archived_only'])) {
+            $sql .= " AND p.archived = 1";
+        } else {
+            $sql .= " AND p.archived = 0";
+        }
+
+        /* ===== FILTRE EXPIRÉS ===== */
+        if (!empty($filters['expired_only'])) {
+            $sql .= " AND p.date_fin IS NOT NULL AND p.date_fin < CURDATE()";
+        } elseif (!empty($filters['zamela_only']) && empty($filters['include_expired'])) {
+            $sql .= " AND (p.date_fin IS NULL OR p.date_fin >= CURDATE())";
+        }
+
         if (!empty($filters['effectues'])) {
             $sql .= " AND pe.parcours_id IS NOT NULL";
         }
@@ -171,7 +200,7 @@ class Parcours
     /* =========================
        CRUD ADMIN
     ========================= */
-    public function create(array $data): void
+    public function create(array $data): int
     {
         $stmt = $this->db->prepare("
             INSERT INTO parcours
@@ -193,6 +222,8 @@ class Parcours
             $data['date_debut'] ?: null,
             $data['date_fin']   ?: null,
         ]);
+
+        return (int)$this->db->lastInsertId();
     }
 
     public function find(int $id): ?array
@@ -245,6 +276,18 @@ class Parcours
     {
         $stmt = $this->db->prepare("DELETE FROM parcours WHERE id = ?");
         $stmt->execute([$id]);
+    }
+
+    public function archive(int $id): void
+    {
+        $this->db->prepare("UPDATE parcours SET archived = 1 WHERE id = ?")
+                 ->execute([$id]);
+    }
+
+    public function unarchive(int $id): void
+    {
+        $this->db->prepare("UPDATE parcours SET archived = 0 WHERE id = ?")
+                 ->execute([$id]);
     }
 
     /* =========================

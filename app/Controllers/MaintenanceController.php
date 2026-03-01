@@ -198,7 +198,11 @@ class MaintenanceController
         $currentVersion = $currentMeta['updated_at'] ?? null;
         $clientVersion  = $_POST['version'] ?? null;
 
-        if ($currentVersion !== $clientVersion) {
+        // Normaliser : null et '' sont équivalents (pas encore de meta)
+        $cvNorm = $currentVersion ?? '';
+        $clNorm = $clientVersion  ?? '';
+
+        if ($cvNorm !== $clNorm) {
 
             if ($isApi) {
                 Response::json([
@@ -228,6 +232,19 @@ class MaintenanceController
             Response::json([
                 'success' => true,
                 'message' => 'Maintenance mise à jour'
+            ]);
+        }
+
+        // Appel AJAX depuis le drawer (header X-Requested-With)
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            $newMeta = $this->maintenance->getMeta();
+            Response::json([
+                'success'     => true,
+                'message'     => 'Liste maintenance mise à jour',
+                'newVersion'  => $newMeta['updated_at'] ?? null,
+                'updatedAt'   => $newMeta['updated_at'] ?? null,
+                'username'    => $newMeta['username'] ?? null,
             ]);
         }
 

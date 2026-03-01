@@ -27,6 +27,12 @@ class Evenement
         if (!empty($filters['effectues'])) {
             $where[] = 'ee.id IS NOT NULL';
         }
+        if (!empty($filters['expired_only'])) {
+            $where[] = 'e.date_fin < CURDATE()';
+        } else {
+            // Onglet actif : exclure les événements expirés
+            $where[] = '(e.date_fin IS NULL OR e.date_fin >= CURDATE())';
+        }
 
         $sql = "
             SELECT e.*,

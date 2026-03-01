@@ -219,6 +219,10 @@ $progression = ($totalParcours > 0) ? round(($effectues / $totalParcours) * 100)
                 class="w-full bg-red-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 transition">
             Lancer le déploiement
         </button>
+        <button id="deploy-reset" type="button"
+                class="w-full mt-2 text-xs text-slate-400 hover:text-slate-600 transition py-1">
+            🔄 Réinitialiser le statut (si "déjà en cours")
+        </button>
         <a href="/deploy/log" class="block mt-2 text-center text-xs text-blue-600 hover:underline">📄 Voir le dernier log</a>
     </div>
 
@@ -268,6 +272,22 @@ document.addEventListener("DOMContentLoaded", function () {
     const progressBar = document.getElementById("deploy-progress-bar");
     const progressTxt = document.getElementById("deploy-progress-text");
     const statusLabel = document.getElementById("deploy-status-label");
+
+    // ── Bouton reset statut deploy ────────────────────────────────
+    const resetBtn = document.getElementById("deploy-reset");
+    if (resetBtn) {
+        resetBtn.addEventListener("click", function() {
+            if (!confirm("Réinitialiser le statut de déploiement ?")) return;
+            fetch("/deploy/reset", {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: "csrf_token=" + encodeURIComponent(document.getElementById("deploy-csrf").value)
+            })
+            .then(r => r.json())
+            .then(d => { if (d.success) { resetBtn.classList.add("hidden"); alert("Statut réinitialisé."); } })
+            .catch(() => {});
+        });
+    }
     const closeBtn    = document.getElementById("deploy-close");
     const errorMsg    = document.getElementById("deploy-error");
     const csrfToken   = document.getElementById("deploy-csrf")?.value;

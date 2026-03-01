@@ -20,6 +20,7 @@ $niveauLabel = fn($n) => match((int)$n) {
     default => ['—',      'bg-gray-100 text-gray-500'],
 };
 
+if (!function_exists('zIsExpired')) {
 function zIsExpired(?string $fin): bool {
     if (!$fin) return false;
     return new DateTime($fin) < new DateTime('today');
@@ -34,6 +35,7 @@ function zFormatDate(?string $d): string {
     $dt = DateTime::createFromFormat('Y-m-d', $d);
     return $dt ? $dt->format('d/m/Y') : $d;
 }
+} // end if (!function_exists('zIsExpired'))
 ?>
 
 <style>
@@ -146,11 +148,9 @@ function zFormatDate(?string $d): string {
                     <form method="post" action="/parcours/reset"
                           data-confirm="Réinitialiser ce Zaméla ?" data-confirm-icon="⚡" data-confirm-ok="Réinitialiser" data-confirm-color="#7c3aed">
                         <input type="hidden" name="parcours_id" value="<?= (int)$z['id'] ?>">
-                        <input type="hidden" name="redirect" value="/zamela">
+                        <input type="hidden" name="redirect" value="/zamela<?= isset($_GET['expires']) ? '?expires=1' : '' ?>">
                         <button type="submit" class="admin-btn delete" title="Réinitialiser">↺</button>
                     </form>
-                <?php elseif ($isExpired): ?>
-                    <button class="btn-z disabled" disabled>⛔ Terminé</button>
                 <?php else: ?>
                     <button onclick="openZValidateModal(<?= (int)$z['id'] ?>)" class="btn-z purple">
                         ⚡ Valider

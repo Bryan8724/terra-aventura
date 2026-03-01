@@ -50,11 +50,14 @@ class ParcoursController
         $limit  = 25;
         $offset = ($page - 1) * $limit;
 
+        $isArchivedTab = isset($_GET['archived']);
+
         $filters = [
-            'effectues'    => isset($_GET['effectues']),
-            'departements' => $_GET['departement'] ?? [],
-            'poiz_id'      => $_GET['poiz_id'] ?? null,
-            'search'       => trim($_GET['search'] ?? '')
+            'effectues'     => isset($_GET['effectues']),
+            'departements'  => $_GET['departement'] ?? [],
+            'poiz_id'       => $_GET['poiz_id'] ?? null,
+            'search'        => trim($_GET['search'] ?? ''),
+            'archived_only' => $isArchivedTab,
         ];
 
         $parcours = $this->parcours->getAllWithFilters(
@@ -83,7 +86,7 @@ class ParcoursController
 
         $poiz         = $this->poiz->getAll();
         $departements = $this->departementsNouvelleAquitaine(); // ✅ FIX : manquait dans la vue
-        $title        = 'Parcours';
+        $title        = $isArchivedTab ? 'Parcours archivés' : 'Parcours';
 
         ob_start();
         require VIEW_PATH . '/parcours/index.php';
@@ -115,35 +118,44 @@ class ParcoursController
                 'success' => true,
                 'data'    => []
             ]);
+            exit;
         }
 
-        $stmt = $this->db->prepare("
-            SELECT
-                p.id,
-                p.titre,
-                p.ville,
-                p.departement_code,
-                p.departement_nom,
-                p.niveau,
-                p.terrain,
-                p.duree,
-                p.distance_km,
-                z.nom  AS poiz_nom,
-                z.logo AS poiz_logo
-            FROM parcours p
-            LEFT JOIN poiz z ON z.id = p.poiz_id
-            WHERE p.titre LIKE :q
-               OR p.ville LIKE :q
-            ORDER BY p.titre ASC
-            LIMIT 20
-        ");
+        try {
+            $stmt = $this->db->prepare("
+                SELECT
+                    p.id,
+                    p.titre,
+                    p.ville,
+                    p.departement_code,
+                    p.departement_nom,
+                    p.niveau,
+                    p.terrain,
+                    p.duree,
+                    p.distance_km,
+                    z.nom  AS poiz_nom,
+                    z.logo AS poiz_logo
+                FROM parcours p
+                LEFT JOIN poiz z ON z.id = p.poiz_id
+                WHERE (p.titre LIKE :q1 OR p.ville LIKE :q2)
+                ORDER BY p.titre ASC
+                LIMIT 20
+            ");
 
-        $stmt->execute(['q' => "%$q%"]);
+            $stmt->execute(['q1' => "%$q%", 'q2' => "%$q%"]);
 
-        Response::json([
-            'success' => true,
-            'data'    => $stmt->fetchAll(PDO::FETCH_ASSOC)
-        ]);
+            Response::json([
+                'success' => true,
+                'data'    => $stmt->fetchAll(PDO::FETCH_ASSOC)
+            ]);
+
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            Response::json([
+                'success' => false,
+                'message' => 'Erreur SQL : ' . $e->getMessage()
+            ]);
+        }
     }
 
     /* =========================================================
@@ -352,9 +364,10 @@ class ParcoursController
     {
         AdminMiddleware::handle();
 
+        $fromArchived = isset($_GET['from_archived']);
         $departements = $this->departementsNouvelleAquitaine();
         $poiz         = $this->poiz->getAll();
-        $title        = 'Ajouter un parcours';
+        $title        = $fromArchived ? 'Ajouter un parcours archivé' : 'Ajouter un parcours';
 
         ob_start();
         require VIEW_PATH . '/parcours/create.php';
@@ -369,7 +382,7 @@ class ParcoursController
     {
         AdminMiddleware::handle();
 
-        $this->parcours->create([
+        $newId = $this->parcours->create([
             'poiz_id'          => (int)($_POST['poiz_id'] ?? 0),
             'titre'            => trim($_POST['titre'] ?? ''),
             'ville'            => trim($_POST['ville'] ?? ''),
@@ -379,7 +392,17 @@ class ParcoursController
             'terrain'          => (int)($_POST['terrain'] ?? 3),
             'duree'            => trim($_POST['duree'] ?? ''),
             'distance_km'      => (float)($_POST['distance_km'] ?? 0),
+            'date_debut'       => trim($_POST['date_debut'] ?? ''),
+            'date_fin'         => trim($_POST['date_fin'] ?? ''),
         ]);
+
+        // Si création depuis l'onglet archivé → archiver immédiatement
+        if (!empty($_POST['from_archived'])) {
+            $this->parcours->archive($newId);
+            Toast::add('success', 'Parcours créé et archivé avec succès');
+            header('Location: /parcours?archived=1');
+            exit;
+        }
 
         Toast::add('success', 'Parcours créé avec succès');
         header('Location: /parcours');
@@ -444,6 +467,8 @@ class ParcoursController
             'terrain'          => (int)($_POST['terrain'] ?? 3),
             'duree'            => trim($_POST['duree'] ?? ''),
             'distance_km'      => (float)($_POST['distance_km'] ?? 0),
+            'date_debut'       => trim($_POST['date_debut'] ?? ''),
+            'date_fin'         => trim($_POST['date_fin'] ?? ''),
         ]);
 
         Toast::add('success', 'Parcours mis à jour');
@@ -475,6 +500,50 @@ class ParcoursController
         $this->parcours->delete($id);
 
         Toast::add('success', 'Parcours supprimé');
+        header('Location: /parcours');
+        exit;
+    }
+
+    /* =========================================================
+       ARCHIVER PARCOURS (ADMIN)
+    ========================================================= */
+    public function archiver(): void
+    {
+        AdminMiddleware::handle();
+
+        $id = (int)($_POST['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $this->parcours->archive($id);
+
+        Toast::add('success', 'Parcours archivé');
+        header('Location: /parcours');
+        exit;
+    }
+
+    /* =========================================================
+       DÉSARCHIVER PARCOURS (ADMIN)
+    ========================================================= */
+    public function desarchiver(): void
+    {
+        AdminMiddleware::handle();
+
+        $id = (int)($_POST['id'] ?? 0);
+
+        if ($id === 0) {
+            Toast::add('error', 'Parcours introuvable');
+            header('Location: /parcours');
+            exit;
+        }
+
+        $this->parcours->unarchive($id);
+
+        Toast::add('success', 'Parcours désarchivé');
         header('Location: /parcours');
         exit;
     }

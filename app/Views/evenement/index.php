@@ -4,6 +4,7 @@ $isAdmin = ($user['role'] ?? '') === 'admin';
 $activeSearch    = trim($_GET['search'] ?? '');
 $activeDept      = trim($_GET['departement'] ?? '');
 $activeEffectues = isset($_GET['effectues']);
+$activeExpires   = isset($_GET['expires']);
 $hasFilters = $activeSearch !== '' || $activeDept !== '' || $activeEffectues;
 ?>
 <style>
@@ -19,6 +20,12 @@ $hasFilters = $activeSearch !== '' || $activeDept !== '' || $activeEffectues;
 .btn-reset{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:9999px;border:1.5px solid #fca5a5;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;cursor:pointer}
 #evFilterPanel{overflow:hidden;transition:max-height .3s ease,opacity .3s ease;max-height:0;opacity:0}
 #evFilterPanel.open{max-height:200px;opacity:1}
+.tab-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:.65rem;font-size:.85rem;font-weight:600;border:none;cursor:pointer;transition:all .18s;text-decoration:none}
+.tab-btn.active{background:#ea580c;color:#fff;box-shadow:0 2px 8px rgba(234,88,12,.25)}
+.tab-btn.inactive{background:#f1f5f9;color:#475569}
+.tab-btn.inactive:hover{background:#e2e8f0}
+.tab-btn.expired-tab.inactive{background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0}
+.tab-btn.expired-tab.active{background:#64748b;color:#fff;box-shadow:0 2px 8px rgba(100,116,139,.25)}
 </style>
 
 <div class="flex justify-between items-center mb-6">
@@ -26,13 +33,31 @@ $hasFilters = $activeSearch !== '' || $activeDept !== '' || $activeEffectues;
         <h1 class="text-2xl font-semibold text-gray-800">Événements 🎉</h1>
         <p class="text-sm text-gray-500">Événements Terra Aventura avec leurs parcours exclusifs</p>
     </div>
-    <?php if ($isAdmin): ?>
-        <a href="/evenement/create"
-           class="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 shadow-sm transition">
-            ➕ Ajouter
+    <div class="flex items-center gap-2">
+        <!-- Onglet Événements expirés -->
+        <a href="<?= $activeExpires ? '/evenement' : '/evenement?expires=1' ?>"
+           class="tab-btn expired-tab <?= $activeExpires ? 'active' : 'inactive' ?>">
+            ⛔ <?= $activeExpires ? 'Expirés' : 'Expirés' ?>
         </a>
-    <?php endif; ?>
+        <?php if ($isAdmin): ?>
+            <a href="/evenement/create"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 shadow-sm transition">
+                ➕ Ajouter
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
+
+<?php if ($activeExpires): ?>
+<!-- BANDEAU INFO EXPIRÉS -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
+    <span class="text-2xl">⛔</span>
+    <div>
+        <p class="text-sm font-semibold text-slate-700">Événements expirés</p>
+        <p class="text-xs text-slate-500">Événements dont la date de fin est passée. Vous pouvez toujours valider votre participation rétroactivement.</p>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- BARRE FILTRES -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
@@ -46,10 +71,12 @@ $hasFilters = $activeSearch !== '' || $activeDept !== '' || $activeEffectues;
         </div>
         <button id="evToggleFilters" type="button"
                 class="filter-pill shrink-0 <?= $activeDept ? 'active' : '' ?>">⚙️ Département</button>
+        <?php if (!$activeExpires): ?>
         <button id="evToggleEffectues" type="button"
                 class="filter-pill shrink-0 <?= $activeEffectues ? 'active' : '' ?>">✔ Effectués</button>
+        <?php endif; ?>
         <?php if ($hasFilters): ?>
-            <a href="/evenement" class="btn-reset shrink-0">✕ Reset</a>
+            <a href="/evenement<?= $activeExpires ? '?expires=1' : '' ?>" class="btn-reset shrink-0">✕ Reset</a>
         <?php endif; ?>
     </div>
     <div id="evFilterPanel" class="<?= $activeDept ? 'open' : '' ?>">
@@ -101,6 +128,7 @@ const evState = {
     search: <?= json_encode($activeSearch) ?>,
     departement: <?= json_encode($activeDept) ?>,
     effectues: <?= json_encode($activeEffectues) ?>,
+    expires: <?= json_encode($activeExpires) ?>,
 };
 const evContainer = document.getElementById('evContainer');
 let evDebounce;
@@ -110,6 +138,7 @@ function evBuildParams() {
     if (evState.search)      p.set('search', evState.search);
     if (evState.departement) p.set('departement', evState.departement);
     if (evState.effectues)   p.set('effectues', '1');
+    if (evState.expires)     p.set('expires', '1');
     p.set('ajax', '1');
     return p.toString();
 }
@@ -132,9 +161,11 @@ document.getElementById('evToggleFilters').addEventListener('click', () => {
 document.getElementById('evDeptSelect').addEventListener('change', function() {
     evState.departement = this.value; this.classList.toggle('has-value', !!this.value); loadEvenements();
 });
+<?php if (!$activeExpires): ?>
 document.getElementById('evToggleEffectues').addEventListener('click', function() {
     evState.effectues = !evState.effectues; this.classList.toggle('active', evState.effectues); loadEvenements();
 });
+<?php endif; ?>
 
 function openEvModal(id) {
     document.getElementById('evModalId').value = id;

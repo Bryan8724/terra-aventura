@@ -189,14 +189,15 @@ class AdminQueteController
                 p.departement_code,
                 po.logo
             FROM parcours p
-            JOIN poiz po ON po.id = p.poiz_id
-            WHERE p.titre LIKE :q
-               OR p.ville  LIKE :q
+            LEFT JOIN poiz po ON po.id = p.poiz_id
+            WHERE p.titre LIKE :q1
+               OR p.ville  LIKE :q2
             ORDER BY p.titre
             LIMIT 30
         ");
 
-        $stmt->execute(['q' => '%' . $q . '%']);
+        $like = '%' . $q . '%';
+        $stmt->execute(['q1' => $like, 'q2' => $like]);
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         Response::json($results);

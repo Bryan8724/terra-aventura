@@ -48,10 +48,12 @@ class ZamelaController
         $offset = ($page - 1) * $limit;
 
         $filters = [
-            'zamela_only'  => true,
-            'effectues'    => isset($_GET['effectues']),
-            'departements' => $_GET['departement'] ?? [],
-            'search'       => trim($_GET['search'] ?? ''),
+            'zamela_only'    => true,
+            'effectues'      => isset($_GET['effectues']),
+            'departements'   => $_GET['departement'] ?? [],
+            'search'         => trim($_GET['search'] ?? ''),
+            'expired_only'   => isset($_GET['expires']),
+            'include_expired'=> isset($_GET['expires']), // when showing expired, include them
         ];
 
         $zamelas    = $this->parcours->getAllWithFilters($userId, $filters, $limit, $offset);
@@ -73,7 +75,7 @@ class ZamelaController
         }
 
         $departements = $this->departements();
-        $title        = 'Zaméla';
+        $title        = isset($_GET['expires']) ? 'Zaméla expirés' : 'Zaméla';
 
         ob_start();
         require VIEW_PATH . '/zamela/index.php';

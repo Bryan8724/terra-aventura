@@ -34,6 +34,7 @@ $router->post('/forgot-password', ['AuthController', 'forgotPassword']);
 
 $router->post('/deploy', ['DeployController', 'deploy']);
 $router->get('/deploy/log', ['DeployController', 'log']);
+$router->post('/deploy/reset', ['DeployController', 'resetStatus']);
 
 
 /*
@@ -69,6 +70,8 @@ $router->post('/parcours/store', ['ParcoursController', 'store']);
 $router->get('/parcours/edit', ['ParcoursController', 'edit']);
 $router->post('/parcours/update', ['ParcoursController', 'update']);
 $router->post('/parcours/delete', ['ParcoursController', 'delete']);
+$router->post('/parcours/archiver', ['ParcoursController', 'archiver']);
+$router->post('/parcours/desarchiver', ['ParcoursController', 'desarchiver']);
 $router->post('/parcours/valider', ['ParcoursController', 'valider']);
 $router->post('/parcours/reset', ['ParcoursController', 'reset']);
 $router->get('/parcours/search', ['ParcoursController', 'search']);

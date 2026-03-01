@@ -38,9 +38,10 @@ class EvenementController
         }
 
         $filters = [
-            'search'      => trim($_GET['search'] ?? ''),
-            'departement' => trim($_GET['departement'] ?? ''),
-            'effectues'   => isset($_GET['effectues']),
+            'search'       => trim($_GET['search'] ?? ''),
+            'departement'  => trim($_GET['departement'] ?? ''),
+            'effectues'    => isset($_GET['effectues']),
+            'expired_only' => isset($_GET['expires']),
         ];
 
         $evenements = $this->evenement->getAll($userId, $filters);
@@ -55,7 +56,7 @@ class EvenementController
         }
 
         $departements = $this->departements();
-        $title        = 'Événements';
+        $title        = isset($_GET['expires']) ? 'Événements expirés' : 'Événements';
 
         ob_start();
         require VIEW_PATH . '/evenement/index.php';

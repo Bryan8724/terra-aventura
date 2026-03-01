@@ -47,15 +47,69 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title ?? 'Terra Aventura') ?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <meta name="robots" content="noindex, nofollow">
 
+        <!-- ✅ Thème : appliqué AVANT rendu pour éviter le flash -->
+    <script>
+    (function(){
+        // Thème : appliqué avant le rendu (évite le flash)
+        // Lire le thème — 'light' par défaut si jamais défini
+        var t = localStorage.getItem('ta_theme');
+        if (t !== 'dark') {
+            t = 'light';
+            localStorage.setItem('ta_theme', 'light'); // Normalise
+        }
+        document.documentElement.setAttribute('data-theme', t);
+
+        // Hauteur réelle iOS : window.innerHeight exclut la barre d'adresse
+        // alors que 100vh l'inclut → contenu coupé en bas sur Safari mobile
+        function fixHeight() {
+            var h = window.innerHeight;
+            var hp = h + 'px';
+            document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
+            if (!document.body) return;
+            // Body
+            document.body.style.height = hp;
+            document.body.style.maxHeight = hp;
+            // Tous les enfants directs du body qui ont un style de hauteur
+            var els = document.body.children;
+            for (var i = 0; i < els.length; i++) {
+                var s = els[i].getAttribute('style') || '';
+                if (s.indexOf('display:flex') !== -1 || s.indexOf('display: flex') !== -1) {
+                    els[i].style.height = hp;
+                    els[i].style.maxHeight = hp;
+                }
+            }
+            // Sidebar — a height:100vh en inline style, doit aussi être corrigé
+            var sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.style.height = hp;
+                sidebar.style.maxHeight = hp;
+            }
+        }
+        fixHeight();
+        window.addEventListener('load', fixHeight);
+        window.addEventListener('resize', fixHeight);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(fixHeight, 100);
+            setTimeout(fixHeight, 400);
+        });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', fixHeight);
+        }
+    })();
+    </script>
+    <!-- Tailwind : dark mode désactivé (on gère via data-theme) -->
+    <script>window.tailwind = {config: {darkMode: 'class'}};</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/toast.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    <meta name="theme-color" content="#0f172a">
 </head>
 
-<body class="bg-gray-100 overflow-hidden">
+<body class="app-body bg-slate-100" style="height:100vh;overflow:hidden;margin:0">
 
 <!-- TOASTS -->
 <?php if (Toast::has()): ?>
@@ -73,16 +127,17 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
      class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"
      onclick="toggleSidebar()"></div>
 
-<div class="flex h-[100dvh]">
+<div style="display:flex;height:100vh;overflow:hidden">
 
     <!-- SIDEBAR -->
     <aside id="sidebar"
            class="fixed md:static top-0 left-0 z-50
-                  h-[100dvh] w-64
+                  w-64
                   bg-gradient-to-b from-slate-900 to-slate-800
                   shadow-lg
                   transform -translate-x-full md:translate-x-0
-                  transition-transform duration-300">
+                  transition-transform duration-300"
+           style="height:100vh;flex-shrink:0">
 
         <div class="h-full flex flex-col">
 
@@ -93,7 +148,7 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-1 text-sm overflow-y-auto">
+            <nav class="flex-1 p-4 space-y-1 text-sm overflow-hidden">
 
                 <a href="/"
                    class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('dashboard', $section) ?>">
@@ -156,10 +211,12 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
             <!-- User -->
             <?php if ($user): ?>
             <div class="p-4 border-t border-slate-700 text-sm text-slate-300">
-                <a href="/user/profile" class="hover:underline">
+                <a href="/user/profile"
+                   class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150
+                          hover:bg-slate-700 hover:text-white text-slate-300">
                     👤 Modifier mon profil
                 </a>
-                <div class="mt-2 text-xs text-slate-400">
+                <div class="mt-2 px-3 text-xs text-slate-400">
                     Connecté en tant que<br>
                     <strong><?= htmlspecialchars($username) ?></strong>
                 </div>
@@ -175,28 +232,37 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
     </aside>
 
     <!-- MAIN -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex flex-col min-w-0" style="flex:1;overflow:hidden;min-height:0">
 
         <!-- HEADER -->
-        <header class="bg-white border-b shadow-sm sticky top-0 z-30">
-            <div class="h-14 px-4 flex items-center justify-between max-w-7xl mx-auto">
+        <header class="bg-white border-b shadow-sm sticky top-0 z-30 flex-shrink-0">
+            <div class="h-14 px-4 flex items-center justify-between">
 
-                <div class="flex items-center gap-4">
-                    <button class="md:hidden text-xl" onclick="toggleSidebar()">☰</button>
+                <div class="flex items-center gap-3">
+                    <button class="md:hidden w-9 h-9 flex items-center justify-center rounded-lg
+                                   hover:bg-slate-100 transition text-slate-600 text-xl"
+                            onclick="toggleSidebar()">☰</button>
 
                     <?php if ($isDev): ?>
-                        <span class="px-3 py-1 text-xs font-bold uppercase tracking-wider
-                                     bg-red-600 text-white rounded-full shadow">
-                            ⚠ ENVIRONNEMENT DEV
+                        <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider
+                                     bg-red-600 text-white rounded-full shadow hidden sm:inline-flex">
+                            ⚠ DEV
                         </span>
                     <?php endif; ?>
+
+                    <!-- Titre page sur mobile (breadcrumb simplifié) -->
+                    <span class="md:hidden text-sm font-semibold text-slate-700 truncate max-w-[140px]">
+                        <?= htmlspecialchars($title ?? 'Terra Aventura') ?>
+                    </span>
                 </div>
 
                 <?php if ($user): ?>
-                <div class="flex gap-4 text-sm items-center">
-                    <span><?= htmlspecialchars($username) ?></span>
-                    <a href="/logout" class="text-red-600 hover:underline">
-                        Déconnexion
+                <div class="flex gap-3 text-sm items-center">
+                    <span class="hidden sm:inline text-slate-600"><?= htmlspecialchars($username) ?></span>
+                    <a href="/logout"
+                       class="text-sm font-semibold text-red-600 hover:text-red-800 transition px-2 py-1 rounded-lg hover:bg-red-50">
+                        <span class="hidden sm:inline">Déconnexion</span>
+                        <span class="sm:hidden">🚪</span>
                     </a>
                 </div>
                 <?php endif; ?>
@@ -205,7 +271,7 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
         </header>
 
         <!-- CONTENT -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-6">
+        <main class="overflow-y-auto p-3 sm:p-4 md:p-6" style="flex:1;min-height:0;padding-bottom:max(1.5rem,env(safe-area-inset-bottom))">
             <div class="max-w-7xl mx-auto">
                 <?= $content ?? '' ?>
             </div>
@@ -340,9 +406,22 @@ document.addEventListener('submit', async function(e) {
 
 <script>
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    document.getElementById('overlay').classList.toggle('hidden');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('hidden');
 }
+// Fermer sidebar au clic sur un lien (mobile)
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.innerWidth < 768) {
+        document.querySelectorAll('#sidebar a').forEach(function(a) {
+            a.addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('overlay').classList.add('hidden');
+            });
+        });
+    }
+});
 </script>
 
 </body>

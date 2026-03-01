@@ -5,6 +5,7 @@ $isAdmin = isset($user['role']) && $user['role'] === 'admin';
 $activeSearch    = trim($_GET['search'] ?? '');
 $activeDept      = $_GET['departement'] ?? [];
 $activeEffectues = isset($_GET['effectues']);
+$activeExpires   = isset($_GET['expires']);
 $hasFilters      = $activeSearch !== '' || !empty($activeDept) || $activeEffectues;
 ?>
 
@@ -30,17 +31,46 @@ $hasFilters      = $activeSearch !== '' || !empty($activeDept) || $activeEffectu
 <div class="flex justify-between items-center mb-6">
     <div>
         <h1 class="text-2xl font-semibold text-gray-800">
-            Zaméla <span class="zamela-badge">⚡ Éphémères</span>
+            Zaméla
+            <?php if ($activeExpires): ?>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-semibold bg-slate-200 text-slate-600 ml-1">⛔ Expirés</span>
+            <?php else: ?>
+                <span class="zamela-badge">⚡ Éphémères</span>
+            <?php endif; ?>
         </h1>
-        <p class="text-sm text-gray-500">Parcours événementiels disponibles sur une période limitée</p>
+        <p class="text-sm text-gray-500">
+            <?= $activeExpires
+                ? 'Parcours Zaméla expirés — ajoutez d\'anciens Zaméla et validez-les'
+                : 'Parcours événementiels disponibles sur une période limitée' ?>
+        </p>
     </div>
-    <?php if ($isAdmin): ?>
-        <a href="/zamela/create"
-           class="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 shadow-sm transition">
-            ➕ Ajouter
+    <div class="flex items-center gap-2">
+        <!-- Onglet Zaméla expirés -->
+        <a href="<?= $activeExpires ? '/zamela' : '/zamela?expires=1' ?>"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition
+                  <?= $activeExpires
+                      ? 'bg-slate-600 text-white shadow-sm hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200' ?>">
+            ⛔ Expirés
         </a>
-    <?php endif; ?>
+        <?php if ($isAdmin): ?>
+            <a href="/zamela/create"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 shadow-sm transition">
+                ➕ Ajouter
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
+
+<?php if ($activeExpires): ?>
+<div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
+    <span class="text-2xl">⛔</span>
+    <div>
+        <p class="text-sm font-semibold text-slate-700">Zaméla expirés</p>
+        <p class="text-xs text-slate-500">Ces Zaméla ne sont plus actifs. Vous pouvez en ajouter de nouveaux (anciens Zaméla) et valider votre participation rétroactivement.</p>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- BARRE RECHERCHE + FILTRES -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
@@ -68,7 +98,7 @@ $hasFilters      = $activeSearch !== '' || !empty($activeDept) || $activeEffectu
         </button>
 
         <?php if ($hasFilters): ?>
-            <a href="/zamela" class="btn-reset shrink-0">✕ Réinitialiser</a>
+            <a href="/zamela<?= $activeExpires ? '?expires=1' : '' ?>" class="btn-reset shrink-0">✕ Réinitialiser</a>
         <?php endif; ?>
     </div>
 
@@ -105,7 +135,7 @@ $hasFilters      = $activeSearch !== '' || !empty($activeDept) || $activeEffectu
         </div>
         <form method="post" action="/parcours/valider" class="space-y-4">
             <input type="hidden" name="parcours_id" id="zModalId">
-            <input type="hidden" name="redirect" value="/zamela">
+            <input type="hidden" name="redirect" value="/zamela<?= $activeExpires ? '?expires=1' : '' ?>">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date de réalisation</label>
                 <input type="date" name="date" required
@@ -138,6 +168,7 @@ const zState = {
     search:      <?= json_encode($activeSearch) ?>,
     departement: <?= json_encode(is_array($activeDept) ? ($activeDept[0] ?? '') : ($activeDept ?? '')) ?>,
     effectues:   <?= json_encode($activeEffectues) ?>,
+    expires:     <?= json_encode($activeExpires) ?>,
 };
 
 const zContainer = document.getElementById('zamelaContainer');
@@ -148,6 +179,7 @@ function zBuildParams() {
     if (zState.search)      p.set('search', zState.search);
     if (zState.departement) p.set('departement[]', zState.departement);
     if (zState.effectues)   p.set('effectues', '1');
+    if (zState.expires)     p.set('expires', '1');
     p.set('ajax', '1');
     return p.toString();
 }

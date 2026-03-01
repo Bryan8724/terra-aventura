@@ -2,6 +2,7 @@
 $user    = $_SESSION['user'] ?? null;
 $isAdmin = ($user['role'] ?? '') === 'admin';
 
+if (!function_exists('evIsActive')) {
 function evIsActive(?string $debut, ?string $fin): bool {
     if (!$debut || !$fin) return false;
     $today = new DateTime('today');
@@ -16,6 +17,7 @@ function evFormatDate(?string $d): string {
     $dt = DateTime::createFromFormat('Y-m-d', $d);
     return $dt ? $dt->format('d/m/Y') : $d;
 }
+} // end if (!function_exists('evIsActive'))
 ?>
 <style>
 .ev-card{background:#fff;border-radius:1rem;border:1px solid #f1f5f9;overflow:hidden;transition:box-shadow .18s,transform .18s}
@@ -111,8 +113,6 @@ function evFormatDate(?string $d): string {
                                 <input type="hidden" name="evenement_id" value="<?= $ev['id'] ?>">
                                 <button type="submit" class="btn-ev done">🎉 Participé</button>
                             </form>
-                        <?php elseif ($isExpired): ?>
-                            <button class="btn-ev disabled" disabled>⛔ Terminé</button>
                         <?php else: ?>
                             <button onclick="openEvModal(<?= $ev['id'] ?>)" class="btn-ev orange">
                                 🎉 Valider

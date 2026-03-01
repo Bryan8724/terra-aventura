@@ -1,0 +1,195 @@
+/* ================================================================
+   theme.css — Terra Aventura
+   Variables CSS light/dark + prefers-color-scheme
+================================================================ */
+
+/* ── LIGHT (défaut) ────────────────────────────────────────── */
+:root {
+    --bg-page:          #f1f5f9;
+    --bg-card:          #ffffff;
+    --bg-card-hover:    #f8fafc;
+    --bg-input:         #ffffff;
+    --bg-input-hover:   #f8fafc;
+    --bg-sidebar:       linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    --bg-header:        #ffffff;
+
+    --border:           #e2e8f0;
+    --border-focus:     #4f46e5;
+    --border-input:     #e2e8f0;
+
+    --text-primary:     #1e293b;
+    --text-secondary:   #475569;
+    --text-muted:       #94a3b8;
+    --text-link:        #4f46e5;
+
+    --shadow-card:      0 1px 4px rgba(0,0,0,.06);
+    --shadow-card-hover:0 6px 20px rgba(0,0,0,.09);
+
+    --accent:           #4f46e5;
+    --accent-light:     #eef2ff;
+    --success:          #16a34a;
+    --danger:           #dc2626;
+    --warning:          #d97706;
+
+    /* Auth pages */
+    --auth-bg:          linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f5f0ff 100%);
+    --auth-card-bg:     #ffffff;
+    --auth-card-border: rgba(79,70,229,.12);
+    --auth-card-shadow: 0 20px 60px rgba(79,70,229,.12), 0 4px 16px rgba(0,0,0,.06);
+    --auth-input-bg:    #f8fafc;
+    --auth-input-border:#e2e8f0;
+    --auth-text:        #1e293b;
+    --auth-muted:       #64748b;
+    --auth-logo-shadow: 0 8px 24px rgba(79,70,229,.3);
+}
+
+/* ── DARK (préférence système) ─────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-page:          #0f172a;
+        --bg-card:          #1e293b;
+        --bg-card-hover:    #263347;
+        --bg-input:         #1e293b;
+        --bg-input-hover:   #263347;
+        --bg-header:        #1e293b;
+
+        --border:           rgba(255,255,255,.08);
+        --border-focus:     #6366f1;
+        --border-input:     rgba(255,255,255,.1);
+
+        --text-primary:     #f1f5f9;
+        --text-secondary:   #cbd5e1;
+        --text-muted:       #64748b;
+        --text-link:        #818cf8;
+
+        --shadow-card:      0 1px 4px rgba(0,0,0,.3);
+        --shadow-card-hover:0 6px 24px rgba(0,0,0,.4);
+
+        --accent:           #6366f1;
+        --accent-light:     rgba(99,102,241,.15);
+        --success:          #22c55e;
+        --danger:           #f87171;
+        --warning:          #fbbf24;
+
+        /* Auth pages */
+        --auth-bg:          linear-gradient(135deg, #0f172a 0%, #1a1f3a 50%, #0f1a2e 100%);
+        --auth-card-bg:     rgba(30,41,59,.95);
+        --auth-card-border: rgba(255,255,255,.08);
+        --auth-card-shadow: 0 25px 60px rgba(0,0,0,.5);
+        --auth-input-bg:    rgba(255,255,255,.06);
+        --auth-input-border:rgba(255,255,255,.1);
+        --auth-text:        #f1f5f9;
+        --auth-muted:       #64748b;
+        --auth-logo-shadow: 0 8px 24px rgba(99,102,241,.4);
+    }
+}
+
+/* ── Application des variables sur les éléments Tailwind ─── */
+/* Ces règles surpassent le thème Tailwind CDN */
+
+body.app-body {
+    background: var(--bg-page) !important;
+}
+
+/* Cards / panels */
+.bg-white {
+    background-color: var(--bg-card) !important;
+}
+.bg-gray-100, .bg-slate-100 {
+    background-color: var(--bg-page) !important;
+}
+.bg-gray-50, .bg-slate-50 {
+    background-color: var(--bg-card-hover) !important;
+}
+
+/* Borders */
+.border-gray-100, .border-slate-100,
+.border-gray-200, .border-slate-200,
+.border { border-color: var(--border) !important; }
+
+/* Inputs */
+input, select, textarea {
+    background-color: var(--bg-input) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-input) !important;
+}
+input::placeholder, textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* Text */
+.text-gray-800, .text-slate-800, .text-gray-900 { color: var(--text-primary) !important; }
+.text-gray-600, .text-slate-600, .text-gray-700, .text-slate-700 { color: var(--text-secondary) !important; }
+.text-gray-400, .text-slate-400, .text-gray-500, .text-slate-500 { color: var(--text-muted) !important; }
+
+/* Header */
+header.bg-white {
+    background-color: var(--bg-header) !important;
+    border-color: var(--border) !important;
+}
+
+/* Tables */
+table thead { background-color: var(--bg-card-hover) !important; }
+table tbody tr:hover { background-color: var(--bg-card-hover) !important; }
+table tbody td, table thead th { border-color: var(--border) !important; }
+
+/* Dark mode : sidebar reste dark dans tous les cas (c'est son design) */
+#sidebar {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+
+/* Dark mode overrides spécifiques */
+@media (prefers-color-scheme: dark) {
+    /* Progress bars tracks */
+    .progress-track, .progress-bar-track {
+        background: rgba(255,255,255,.08) !important;
+    }
+    /* Badges clairs → assombris */
+    .bg-blue-50  { background-color: rgba(59,130,246,.15)  !important; }
+    .bg-green-50 { background-color: rgba(34,197,94,.12)   !important; }
+    .bg-red-50   { background-color: rgba(239,68,68,.12)   !important; }
+    .bg-amber-50 { background-color: rgba(245,158,11,.12)  !important; }
+    .bg-violet-50{ background-color: rgba(139,92,246,.12)  !important; }
+    .bg-indigo-50{ background-color: rgba(99,102,241,.12)  !important; }
+    .bg-orange-50{ background-color: rgba(249,115,22,.12)  !important; }
+    .bg-emerald-50{background-color: rgba(16,185,129,.12)  !important; }
+    .bg-slate-50 { background-color: rgba(255,255,255,.04) !important; }
+    .bg-sky-50   { background-color: rgba(14,165,233,.12)  !important; }
+
+    /* Colored badges text lisible en dark */
+    .bg-blue-100  { background-color: rgba(59,130,246,.2)  !important; }
+    .bg-green-100 { background-color: rgba(34,197,94,.2)   !important; }
+    .bg-red-100   { background-color: rgba(239,68,68,.2)   !important; }
+    .bg-amber-100 { background-color: rgba(245,158,11,.2)  !important; }
+    .bg-indigo-100{ background-color: rgba(99,102,241,.2)  !important; }
+    .bg-sky-100   { background-color: rgba(14,165,233,.2)  !important; }
+    .text-blue-700   { color: #93c5fd !important; }
+    .text-green-700  { color: #86efac !important; }
+    .text-red-700    { color: #fca5a5 !important; }
+    .text-indigo-700 { color: #a5b4fc !important; }
+    .text-sky-700    { color: #7dd3fc !important; }
+    .text-amber-700  { color: #fcd34d !important; }
+
+    /* Borders */
+    .border-gray-100, .border-slate-100,
+    .border-gray-200, .border-slate-200 {
+        border-color: rgba(255,255,255,.07) !important;
+    }
+
+    /* Dashboard cards */
+    .dash-card { background-color: #1e293b !important; border-color: rgba(255,255,255,.06) !important; }
+    .dash-card .card-label { color: #64748b !important; }
+    .dash-card .card-value { color: #f1f5f9 !important; }
+
+    /* Maintenance cards */
+    .maint-card { background: #1e293b !important; border-color: rgba(239,68,68,.3) !important; }
+    .maint-card-title { color: #fca5a5 !important; }
+
+    /* Shadows */
+    .shadow-sm { box-shadow: 0 1px 4px rgba(0,0,0,.4) !important; }
+
+    /* Gradient headers (welcome band) - reste bleu ok */
+
+    /* Scrollbar dark */
+    ::-webkit-scrollbar-thumb { background: rgba(100,116,139,.5) !important; }
+}

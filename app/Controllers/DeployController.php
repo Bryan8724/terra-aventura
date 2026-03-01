@@ -19,6 +19,15 @@ class DeployController
 
     public function deploy(): void
     {
+        // Capturer toute sortie non-JSON (erreurs PHP → HTML) avant qu'elles partent au client
+        ob_start();
+        
+        // Handler d'erreurs → JSON au lieu de HTML
+        set_error_handler(function(int $errno, string $errstr) {
+            ob_end_clean();
+            $this->json(['success' => false, 'error' => "Erreur PHP: $errstr"], 500);
+        });
+
         // 🔒 DEV uniquement
         if (getenv('APP_ENV') !== 'dev') {
             $this->json(['success' => false, 'error' => 'Interdit en production'], 403);
@@ -47,9 +56,18 @@ class DeployController
         if (file_exists($this->statusFile)) {
             $content       = json_decode(file_get_contents($this->statusFile), true);
             $currentStatus = $content['status'] ?? null;
+            $ts            = (int)($content['ts'] ?? 0);
+            $statusAge     = $ts > 0 ? time() - $ts : PHP_INT_MAX; // ts absent = très vieux = on laisse passer
 
-            if (in_array($currentStatus, ['pushing', 'starting', 'pulling', 'building', 'backup', 'migrating', 'verifying', 'finalizing'])) {
+            $activeStatuses = ['pushing', 'starting', 'pulling', 'building', 'backup', 'migrating', 'verifying', 'finalizing'];
+            $isActive = in_array($currentStatus, $activeStatuses);
+
+            if ($isActive && $statusAge < 300) {
+                // Bloqué < 5 min → déploiement vraiment en cours
                 $this->json(['success' => false, 'error' => 'Un déploiement est déjà en cours.'], 409);
+            } elseif ($isActive) {
+                // Bloqué > 5 min → zombie, on réinitialise silencieusement
+                file_put_contents($this->statusFile, json_encode(['status' => 'idle', 'progress' => 0, 'ts' => time()]));
             }
         }
 
@@ -67,20 +85,44 @@ class DeployController
         // 📡 Statut : git push en cours
         file_put_contents($this->statusFile, json_encode([
             'status'   => 'pushing',
-            'progress' => 3
+            'progress' => 3,
+            'ts'       => time()
         ]));
 
         // 🚀 GIT : checkout → add → commit → push
         $projectRoot = ROOT_PATH;
 
+        // ✅ Fix permissions .git
+        // ROOT_PATH = /var/www/html/app  →  .git est dans le dossier PARENT
+        // On remonte d'un niveau pour trouver la racine git réelle.
+        $gitRoot = dirname($projectRoot);
+        // Vérifier : si .git n'est pas dans le parent, tester ROOT_PATH lui-même
+        if (!is_dir($gitRoot . '/.git') && is_dir($projectRoot . '/.git')) {
+            $gitRoot = $projectRoot;
+        }
+        $gitDir     = $gitRoot . '/.git';
+        $gitObjects = $gitDir  . '/objects';
+
+        // Chmod récursif via exec (fonctionne si www-data possède les fichiers)
+        @exec("find " . escapeshellarg($gitDir) . " -type d -exec chmod 777 {} + 2>&1");
+        @exec("find " . escapeshellarg($gitDir) . " -type f -exec chmod 666 {} + 2>&1");
+        @exec("git -C " . escapeshellarg($gitRoot) . " config core.sharedRepository world 2>&1");
+        // Rendre les fichiers app lisibles par git
+        @exec("find " . escapeshellarg($projectRoot) . " -type f -exec chmod a+r {} + 2>&1");
+
+        // Utiliser gitRoot pour toutes les commandes git
+        $projectRoot = $gitRoot;
+
+        // Options git inline : contourne le problème gitconfig read-only dans Docker
+        // -c safe.directory=*           → autorise git à travailler dans ce dossier (owner != user courant)
+        // -c core.sharedRepository=world → les nouveaux objets sont accessibles par tous
+        $gitOpts = "-c safe.directory=* -c core.sharedRepository=world";
+
         $gitCommands = [
-            "git -C " . escapeshellarg($projectRoot) . " checkout main 2>&1",
-            // ✅ Exclure docker-compose.yml et .env → spécifiques à chaque environnement
-            //    sans ça, le push écrase la config prod avec celle de dev
-            "git -C " . escapeshellarg($projectRoot) . " add -A -- ':!docker-compose.yml' ':!.env' ':!.env.*' 2>&1",
-            // --allow-empty : ne plante pas s'il n'y a rien de nouveau à commiter
-            "git -C " . escapeshellarg($projectRoot) . " commit --allow-empty -m " . escapeshellarg($commitMsg) . " 2>&1",
-            "git -C " . escapeshellarg($projectRoot) . " push origin main 2>&1",
+            "git $gitOpts -C " . escapeshellarg($projectRoot) . " checkout main 2>&1",
+            "git $gitOpts -C " . escapeshellarg($projectRoot) . " add -A 2>&1",
+            "git $gitOpts -C " . escapeshellarg($projectRoot) . " commit --allow-empty -m " . escapeshellarg($commitMsg) . " 2>&1",
+            "git $gitOpts -C " . escapeshellarg($projectRoot) . " push origin main 2>&1",
         ];
 
         foreach ($gitCommands as $cmd) {
@@ -116,6 +158,8 @@ class DeployController
         // 🔄 Rotation du token CSRF
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
+        ob_end_clean();
+        restore_error_handler();
         $this->json(['success' => true]);
     }
 
@@ -147,4 +191,20 @@ class DeployController
         echo htmlspecialchars($content);
         echo "</pre>";
     }
+
+    public function resetStatus(): void
+    {
+        if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
+            $this->json(['success' => false, 'error' => 'Accès refusé'], 403);
+        }
+
+        file_put_contents($this->statusFile, json_encode([
+            'status'   => 'idle',
+            'progress' => 0,
+            'ts'       => time()
+        ]));
+
+        $this->json(['success' => true]);
+    }
+
 }

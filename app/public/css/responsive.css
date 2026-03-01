@@ -1,0 +1,337 @@
+/* ================================================================
+   responsive.css — Terra Aventura
+   NB: Tailwind est configuré en darkMode:'class' dans le layout
+   → son dark mode ne se déclenche JAMAIS automatiquement
+   On gère light/dark via data-theme sur <html>
+================================================================ */
+
+/* ══════════════════════════════════════════════════════════════
+   1. VARIABLES — LIGHT (toujours actif par défaut)
+══════════════════════════════════════════════════════════════ */
+:root,
+[data-theme="light"] {
+    --bg-page:           #f1f5f9;
+    --bg-card:           #ffffff;
+    --bg-card-hover:     #f8fafc;
+    --bg-input:          #ffffff;
+    --bg-header:         #ffffff;
+    --border:            #e2e8f0;
+    --border-input:      #e2e8f0;
+    --text-primary:      #1e293b;
+    --text-secondary:    #475569;
+    --text-muted:        #94a3b8;
+    --text-link:         #4f46e5;
+    --accent:            #4f46e5;
+    --success:           #16a34a;
+    --danger:            #dc2626;
+}
+
+/* ── DARK : uniquement si data-theme="dark" explicitement ──── */
+[data-theme="dark"] {
+    --bg-page:           #0f172a;
+    --bg-card:           #1e293b;
+    --bg-card-hover:     #263347;
+    --bg-input:          #1e293b;
+    --bg-header:         #1e293b;
+    --border:            rgba(255,255,255,.08);
+    --border-input:      rgba(255,255,255,.1);
+    --text-primary:      #f1f5f9;
+    --text-secondary:    #cbd5e1;
+    --text-muted:        #64748b;
+    --text-link:         #818cf8;
+    --accent:            #6366f1;
+    --success:           #22c55e;
+    --danger:            #f87171;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   2. APPLICATION DU THÈME
+   Tailwind dark mode est DÉSACTIVÉ (darkMode:'class' sans class="dark")
+   → on force les couleurs via nos variables
+══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; }
+
+body.app-body            { background-color: var(--bg-page) !important; }
+.bg-white                { background-color: var(--bg-card) !important; }
+.bg-slate-100, .bg-gray-100 { background-color: var(--bg-page) !important; }
+.bg-slate-50,  .bg-gray-50  { background-color: var(--bg-card-hover) !important; }
+
+.border, .border-slate-100, .border-gray-100,
+.border-slate-200, .border-gray-200 { border-color: var(--border) !important; }
+
+/* Textes */
+.text-slate-800, .text-gray-800,
+.text-slate-900, .text-gray-900 { color: var(--text-primary)   !important; }
+.text-slate-700, .text-gray-700,
+.text-slate-600, .text-gray-600 { color: var(--text-secondary) !important; }
+.text-slate-500, .text-gray-500,
+.text-slate-400, .text-gray-400 { color: var(--text-muted)     !important; }
+
+/* Inputs */
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+select, textarea {
+    background-color: var(--bg-input)     !important;
+    color:            var(--text-primary) !important;
+    border-color:     var(--border-input) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted) !important; }
+
+/* Header */
+header.bg-white {
+    background-color: var(--bg-header) !important;
+    border-color:     var(--border)    !important;
+}
+
+/* Tables */
+table thead           { background-color: var(--bg-card-hover) !important; }
+table tbody tr:hover  { background-color: var(--bg-card-hover) !important; }
+table td, table th    { border-color: var(--border) !important; color: var(--text-primary) !important; }
+
+/* Sidebar — toujours dark */
+#sidebar {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+}
+
+/* ── Overrides dark (badges colorés, cards spéciales) ──────── */
+[data-theme="dark"] .progress-track,
+[data-theme="dark"] .progress-bar-track { background: rgba(255,255,255,.08) !important; }
+
+[data-theme="dark"] .bg-blue-50    { background-color: rgba(59,130,246,.12)  !important; }
+[data-theme="dark"] .bg-green-50   { background-color: rgba(34,197,94,.12)   !important; }
+[data-theme="dark"] .bg-red-50     { background-color: rgba(239,68,68,.12)   !important; }
+[data-theme="dark"] .bg-amber-50   { background-color: rgba(245,158,11,.12)  !important; }
+[data-theme="dark"] .bg-violet-50  { background-color: rgba(139,92,246,.12)  !important; }
+[data-theme="dark"] .bg-indigo-50  { background-color: rgba(99,102,241,.12)  !important; }
+[data-theme="dark"] .bg-orange-50  { background-color: rgba(249,115,22,.12)  !important; }
+[data-theme="dark"] .bg-emerald-50 { background-color: rgba(16,185,129,.12)  !important; }
+[data-theme="dark"] .bg-slate-50   { background-color: rgba(255,255,255,.04) !important; }
+[data-theme="dark"] .bg-sky-50     { background-color: rgba(14,165,233,.12)  !important; }
+[data-theme="dark"] .bg-blue-100   { background-color: rgba(59,130,246,.2)   !important; }
+[data-theme="dark"] .bg-green-100  { background-color: rgba(34,197,94,.2)    !important; }
+[data-theme="dark"] .bg-red-100    { background-color: rgba(239,68,68,.2)    !important; }
+[data-theme="dark"] .bg-amber-100  { background-color: rgba(245,158,11,.2)   !important; }
+[data-theme="dark"] .bg-indigo-100 { background-color: rgba(99,102,241,.2)   !important; }
+[data-theme="dark"] .bg-sky-100    { background-color: rgba(14,165,233,.2)   !important; }
+
+[data-theme="dark"] .text-blue-700   { color: #93c5fd !important; }
+[data-theme="dark"] .text-green-700  { color: #86efac !important; }
+[data-theme="dark"] .text-red-700    { color: #fca5a5 !important; }
+[data-theme="dark"] .text-indigo-700 { color: #a5b4fc !important; }
+[data-theme="dark"] .text-sky-700    { color: #7dd3fc !important; }
+[data-theme="dark"] .text-amber-700  { color: #fcd34d !important; }
+
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-gray-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-gray-200  { border-color: rgba(255,255,255,.07) !important; }
+
+[data-theme="dark"] .dash-card        { background-color: #1e293b !important;
+                                        border-color: rgba(255,255,255,.06) !important; }
+[data-theme="dark"] .dash-card .card-label { color: #64748b !important; }
+[data-theme="dark"] .dash-card .card-value { color: #f1f5f9 !important; }
+[data-theme="dark"] .maint-card       { background: #1e293b !important;
+                                        border-color: rgba(239,68,68,.3) !important; }
+[data-theme="dark"] .maint-card-title { color: #fca5a5 !important; }
+[data-theme="dark"] .shadow-sm        { box-shadow: 0 1px 4px rgba(0,0,0,.4) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   3. SCROLLBAR — visible desktop, fine mobile
+══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,.04); }
+::-webkit-scrollbar-thumb {
+    background:    rgba(100,116,139,.35);
+    border-radius: 9999px;
+    border:        2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background:    rgba(100,116,139,.6);
+    background-clip: content-box;
+}
+[data-theme="dark"] ::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background:    rgba(148,163,184,.25);
+    background-clip: content-box;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background:    rgba(148,163,184,.5);
+    background-clip: content-box;
+}
+@media (max-width: 767px) {
+    ::-webkit-scrollbar        { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb  { border: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. LAYOUT — hauteur correcte sur iOS
+   --vh est mis à jour par JS (window.innerHeight * 0.01)
+   Les éléments avec height:100vh reçoivent directement la bonne
+   hauteur via JS sur le style inline (body, wrapper flex).
+══════════════════════════════════════════════════════════════ */
+:root { --vh: 1vh; } /* Mis à jour par JS (window.innerHeight / 100) */
+
+html { overflow: hidden; margin: 0; height: 100%; }
+body {
+    /* JS met body.style.height = window.innerHeight + 'px' directement */
+    /* Le CSS sert de fallback pour les navigateurs sans JS ou au 1er rendu */
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
+    margin: 0;
+}
+
+body > div[style*="display:flex"] { overflow: hidden !important; }
+
+div[style*="flex:1;overflow:hidden"] {
+    display: flex !important; flex-direction: column !important;
+    min-height: 0 !important; overflow: hidden !important;
+}
+
+/* #sidebar — JS met sidebar.style.height directement
+   Le CSS height:100% sert de fallback */
+#sidebar { height: 100%; overflow-y: auto; flex-shrink: 0; }
+
+/* min-height:0 obligatoire pour scroll dans flex child */
+main.overflow-y-auto,
+main[class*="overflow-y-auto"] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 !important;
+    min-height: 0 !important;
+    /* Safe area iOS : espace pour barre de geste bas + 1.5rem de marge */
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem) !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. SIDEBAR MOBILE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    #sidebar {
+        position: fixed !important; top: 0 !important; left: 0 !important;
+        z-index: 50 !important; width: 260px !important;
+        transform: translateX(-100%) !important;
+        transition: transform .28s cubic-bezier(.4,0,.2,1) !important;
+    }
+    #sidebar.open {
+        transform: translateX(0) !important;
+        box-shadow: 4px 0 24px rgba(0,0,0,.4) !important;
+    }
+    #overlay        { display: block !important; }
+    #overlay.hidden { display: none  !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. PAGE HEADERS
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    .flex.justify-between.items-center.mb-6,
+    .flex.justify-between.items-center.mb-5,
+    .flex.justify-between.items-center.mb-7 {
+        flex-direction: column !important; align-items: flex-start !important; gap: .625rem !important;
+    }
+    .flex.justify-between.items-center.mb-6 > .flex,
+    .flex.justify-between.items-center.mb-5 > .flex { width: 100%; flex-wrap: wrap; }
+    .flex.justify-between.items-center.mb-6 > .flex > a,
+    .flex.justify-between.items-center.mb-5 > .flex > a {
+        flex: 1; justify-content: center; text-align: center; min-width: 120px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   7. TABLES
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    .overflow-x-auto             { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .overflow-x-auto table       { min-width: 480px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8. GRILLES
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    [style*="grid-template-columns:1fr 1fr 1fr"],
+    [style*="grid-template-columns: 1fr 1fr 1fr"],
+    .grid.grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid.sm\:grid-cols-2,
+    .grid.gap-4.sm\:grid-cols-2 { grid-template-columns: 1fr !important; }
+    .grid.grid-cols-2.md\:grid-cols-3 { grid-template-columns: repeat(2,1fr) !important; }
+    .grid.grid-cols-2.sm\:grid-cols-3.md\:grid-cols-4.xl\:grid-cols-5 {
+        grid-template-columns: repeat(2,1fr) !important;
+    }
+}
+@media (max-width: 900px) {
+    [style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   9. CARDS PARCOURS
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    .parcours-card { flex-direction: column !important; align-items: flex-start !important; gap: .625rem !important; }
+    .parcours-card > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: .5rem; }
+    .parcours-card > div:last-child > button,
+    .parcours-card > div:last-child > a,
+    .parcours-card > div:last-child > form button { flex: 1; justify-content: center; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   10. MAINTENANCE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    .maint-header { flex-direction: column !important; gap: .75rem !important; }
+    .maint-card   { flex-direction: column !important; align-items: flex-start !important; gap: .75rem !important; }
+    .maint-card .btn-detail  { width: 100%; justify-content: center; }
+    .maint-actions           { width: 100%; }
+    .maint-actions .btn-history,
+    .maint-actions .btn-edit { flex: 1; justify-content: center; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   11. MODALS
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    .modal-box,
+    .bg-white.rounded-2xl.shadow-xl.w-full,
+    #parcoursModal > div, #deleteObjetModal > div, #confirmSaveModal > div {
+        margin: .5rem !important; max-height: 88vh !important;
+        overflow-y: auto !important; width: calc(100vw - 1rem) !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   12. FILTRES / FORMULAIRES / DIVERS MOBILE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+    .filter-pill.shrink-0 { flex: 1; justify-content: center; min-width: 0; }
+    .btn-reset.shrink-0   { flex: 1; justify-content: center; }
+    .max-w-3xl, .max-w-2xl { max-width: 100% !important; }
+    .flex.items-center.justify-between.pt-2 { flex-direction: column !important; gap: .75rem !important; }
+    .flex.items-center.justify-between.pt-2 > a,
+    .flex.items-center.justify-between.pt-2 > button { width: 100% !important; justify-content: center !important; }
+    [style*="justify-content:space-between"][style*="border-radius:1.125rem"] {
+        flex-direction: column !important; gap: .75rem !important;
+    }
+    [style*="justify-content:space-between"][style*="border-radius:1.125rem"] > a,
+    [style*="justify-content:space-between"][style*="border-radius:1.125rem"] > button {
+        width: 100% !important; justify-content: center !important;
+    }
+    .welcome-band { flex-direction: column !important; text-align: center !important; padding: 1.25rem !important; }
+    .flex.flex-col.sm\:flex-row.sm\:items-center.sm\:justify-between.gap-4 { flex-direction: column !important; }
+    .rounded-2xl.p-5.mb-6.flex.flex-col.sm\:flex-row { flex-direction: column !important; text-align: center !important; }
+    .dash-card             { padding: 1rem !important; gap: .5rem !important; }
+    .dash-card .card-value { font-size: 1.35rem !important; }
+    .dash-card .card-icon  { width: 2.25rem !important; height: 2.25rem !important; font-size: 1.1rem !important; }
+    main.overflow-y-auto   { padding: .75rem !important; }
+    h1.text-2xl            { font-size: 1.3rem !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   13. iOS — empêcher zoom sur focus input
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    input[type="text"], input[type="email"], input[type="password"],
+    input[type="number"], input[type="date"], input[type="time"],
+    select, textarea { font-size: 16px !important; }
+    button, a { min-height: 34px; }
+}

@@ -1,31 +1,43 @@
+<!-- ══════════════════════════════════════════
+     MODAL — Recherche parcours
+     Appelé via openParcoursModal(objetIndex)
+═══════════════════════════════════════════ -->
 <div id="parcoursModal"
-     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+     class="fixed inset-0 z-50"
+     style="display:none;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
 
-    <div class="bg-white p-6 rounded-xl w-full max-w-lg space-y-4 shadow-lg">
-        <div>
-            <h3 class="text-lg font-bold">
-                ➕ Ajouter un parcours
-            </h3>
-            <p class="text-sm text-gray-500">
-                Recherchez un parcours à associer à cet objet
-            </p>
+    <div class="modal-box" style="max-width:520px">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <div>
+                <h3 class="text-base font-bold text-slate-800">🗺️ Ajouter un parcours</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Associez un parcours à cet objet de quête</p>
+            </div>
+            <button type="button" onclick="closeParcoursModal()" class="modal-close-btn">✕</button>
         </div>
 
-        <input type="text"
-               id="searchParcours"
-               placeholder="Rechercher par nom de parcours…"
-               autocomplete="off"
-               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- Recherche -->
+        <div class="modal-body">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm pointer-events-none">🔍</span>
+                <input type="text"
+                       id="searchParcours"
+                       placeholder="Rechercher par nom de parcours…"
+                       autocomplete="off"
+                       class="modal-search-input">
+            </div>
 
-        <div id="parcoursResults"
-             class="space-y-2 text-sm max-h-64 overflow-y-auto border rounded p-2 bg-gray-50">
-            <!-- Résultats injectés en JS -->
+            <div id="parcoursResults" class="parcours-results-container">
+                <div class="parcours-empty">🔍 Commencez à taper pour rechercher…</div>
+            </div>
         </div>
 
-        <div class="flex justify-end gap-2 pt-2">
+        <!-- Footer -->
+        <div class="modal-footer">
             <button type="button"
                     onclick="closeParcoursModal()"
-                    class="px-4 py-2 rounded border border-gray-300 hover:bg-gray-100">
+                    class="btn-secondary">
                 Fermer
             </button>
         </div>

@@ -202,6 +202,21 @@ $niveauLabel = fn($n) => match((int)$n) {
 
                         <?php if ($isAdmin): ?>
                             <a href="/parcours/edit?id=<?= (int)$p['id'] ?>" class="admin-btn edit" title="Modifier">✏️</a>
+                            <?php if (!empty($p['archived'])): ?>
+                                <!-- Désarchiver -->
+                                <form method="post" action="/parcours/desarchiver"
+                                      data-confirm="Désarchiver ce parcours ?" data-confirm-icon="📦" data-confirm-ok="Désarchiver">
+                                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                                    <button type="submit" class="admin-btn" style="background:#fef3c7;color:#b45309" title="Désarchiver">📤</button>
+                                </form>
+                            <?php else: ?>
+                                <!-- Archiver -->
+                                <form method="post" action="/parcours/archiver"
+                                      data-confirm="Archiver ce parcours ? Il ne sera plus visible dans la liste principale." data-confirm-icon="📦" data-confirm-ok="Archiver">
+                                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                                    <button type="submit" class="admin-btn" style="background:#fef9c3;color:#92400e" title="Archiver">📦</button>
+                                </form>
+                            <?php endif; ?>
                             <form method="post" action="/parcours/delete"
                                   data-confirm="Supprimer ce parcours ?" data-confirm-icon="🗑️" data-confirm-sub="Cette action est irréversible." data-confirm-ok="Supprimer">
                                 <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
@@ -217,23 +232,31 @@ $niveauLabel = fn($n) => match((int)$n) {
     <?php endforeach; ?>
 
     <!-- Pagination -->
-    <?php if (!empty($totalPages) && $totalPages > 1): ?>
+    <?php if (!empty($totalPages) && $totalPages > 1):
+        // ✅ FIX : on retire 'ajax' des params existants pour le reconstruire proprement,
+        //         puis on force ajax=1 dans chaque URL de pagination.
+        //         Sans ce fix, un clic sur page 2 depuis le rendu initial (sans ajax=1 dans $_GET)
+        //         envoyait une requête sans ajax=1 → le contrôleur retournait la page COMPLÈTE
+        //         au lieu du fragment, injectant tout le layout dans #parcoursContainer.
+        $baseParams = array_diff_key($_GET, ['page' => '', 'ajax' => '']);
+        $mkPage = fn(int $p) => http_build_query(array_merge($baseParams, ['page' => $p, 'ajax' => '1']));
+    ?>
         <div class="flex justify-center items-center gap-1.5 mt-8 flex-wrap">
 
             <?php if ($currentPage > 1): ?>
-                <button onclick="loadParcours('<?= http_build_query(array_merge($_GET, ['page' => $currentPage - 1])) ?>')"
+                <button onclick="loadParcours('<?= $mkPage($currentPage - 1) ?>')"
                         class="page-btn arrow">←</button>
             <?php endif; ?>
 
             <?php for ($i = max(1, $currentPage - 3); $i <= min($totalPages, $currentPage + 3); $i++): ?>
-                <button onclick="loadParcours('<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>')"
+                <button onclick="loadParcours('<?= $mkPage($i) ?>')"
                         class="page-btn <?= $i == $currentPage ? 'active' : '' ?>">
                     <?= $i ?>
                 </button>
             <?php endfor; ?>
 
             <?php if ($currentPage < $totalPages): ?>
-                <button onclick="loadParcours('<?= http_build_query(array_merge($_GET, ['page' => $currentPage + 1])) ?>')"
+                <button onclick="loadParcours('<?= $mkPage($currentPage + 1) ?>')"
                         class="page-btn arrow">→</button>
             <?php endif; ?>
 
