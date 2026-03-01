@@ -118,11 +118,17 @@ class DeployController
         // -c core.sharedRepository=world → les nouveaux objets sont accessibles par tous
         $gitOpts = "-c safe.directory=* -c core.sharedRepository=world";
 
+        // Problème root vs www-data : git crée des sous-dossiers dans .git/objects
+        // avec le umask du process (022) → pas inscriptibles ensuite.
+        // Fix : chmod avant chaque commande + umask 0000 dans le shell.
+        $pr = escapeshellarg($projectRoot);
         $gitCommands = [
-            "git $gitOpts -C " . escapeshellarg($projectRoot) . " checkout main 2>&1",
-            "git $gitOpts -C " . escapeshellarg($projectRoot) . " add -A 2>&1",
-            "git $gitOpts -C " . escapeshellarg($projectRoot) . " commit --allow-empty -m " . escapeshellarg($commitMsg) . " 2>&1",
-            "git $gitOpts -C " . escapeshellarg($projectRoot) . " push origin main 2>&1",
+            "find {$projectRoot}/.git/objects -type d -exec chmod 777 {} + 2>/dev/null; "
+                . "find {$projectRoot}/.git/objects -type f -exec chmod 666 {} + 2>/dev/null; "
+                . "umask 0000 && git $gitOpts -C $pr checkout main 2>&1",
+            "umask 0000 && git $gitOpts -C $pr add -A 2>&1",
+            "umask 0000 && git $gitOpts -C $pr commit --allow-empty -m " . escapeshellarg($commitMsg) . " 2>&1",
+            "umask 0000 && git $gitOpts -C $pr push origin main 2>&1",
         ];
 
         foreach ($gitCommands as $cmd) {

@@ -48,6 +48,8 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title ?? 'Terra Aventura') ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!-- Empêche Chrome/Samsung de forcer le dark mode sur ce site -->
+    <meta name="color-scheme" content="light">
 
     <meta name="robots" content="noindex, nofollow">
 
@@ -102,6 +104,12 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
     })();
     </script>
     <!-- Tailwind : dark mode désactivé (on gère via data-theme) -->
+    <style>
+        /* color-scheme: light = interdit au navigateur de forcer le dark mode */
+        /* On gère nous-mêmes le dark via data-theme="dark" sur <html> */
+        :root { color-scheme: light !important; }
+        [data-theme="dark"] { color-scheme: dark !important; }
+    </style>
     <script>window.tailwind = {config: {darkMode: 'class'}};</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/toast.css">
@@ -132,7 +140,7 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
     <!-- SIDEBAR -->
     <aside id="sidebar"
            class="fixed md:static top-0 left-0 z-50
-                  w-64
+                  w-52
                   bg-gradient-to-b from-slate-900 to-slate-800
                   shadow-lg
                   transform -translate-x-full md:translate-x-0
@@ -147,84 +155,61 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
                 <div class="text-xs text-slate-400">Interface de gestion</div>
             </div>
 
-            <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-1 text-sm overflow-hidden">
+            <!-- Navigation compacte -->
+            <nav class="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 text-sm">
 
-                <a href="/"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('dashboard', $section) ?>">
-                    📊 Dashboard
-                </a>
-
-                <a href="/poiz"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('poiz', $section) ?>">
-                    📍 POIZ
-                </a>
-
-                <a href="/parcours"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('parcours', $section) ?>">
-                    🗺️ Parcours
-                </a>
-
-                <a href="/zamela"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('zamela', $section) ?>">
-                    ⚡ Zaméla
-                </a>
-
-                <a href="/evenement"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('evenement', $section) ?>">
-                    🎉 Événements
-                </a>
-
-                <a href="/stats"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('stats', $section) ?>">
-                    📊 Statistiques
-                </a>
-
-                <a href="/maintenance"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('maintenance', $section) ?>">
-                    🛠 Maintenance
-                </a>
-
-                <a href="<?= $quetesUrl ?>"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('quetes', $section) ?>">
-                    🎯 Quêtes
-                </a>
+                <?php
+                // Liens nav — heredoc évite les conflits de guillemets
+                function navLink(string $href, string $icon, string $label, string $name, string $current): string {
+                    $cls = $current === $name
+                        ? 'bg-blue-600 text-white font-semibold'
+                        : 'text-slate-300 hover:bg-slate-700 hover:text-white';
+                    return sprintf(
+                        '<a href="%s" class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors %s">'
+                        . '<span class="text-base leading-none">%s</span>'
+                        . '<span class="truncate">%s</span></a>',
+                        htmlspecialchars($href), $cls, $icon, htmlspecialchars($label)
+                    );
+                }
+                echo navLink('/', '📊', 'Dashboard', 'dashboard', $section);
+                echo navLink('/poiz', '📍', 'POIZ', 'poiz', $section);
+                echo navLink('/parcours', '🗺️', 'Parcours', 'parcours', $section);
+                echo navLink('/zamela', '⚡', 'Zaméla', 'zamela', $section);
+                echo navLink('/evenement', '🎉', 'Événements', 'evenement', $section);
+                echo navLink('/stats', '📊', 'Statistiques', 'stats', $section);
+                echo navLink('/maintenance', '🛠️', 'Maintenance', 'maintenance', $section);
+                echo navLink($quetesUrl, '🎯', 'Quêtes', 'quetes', $section);
+                ?>
 
                 <?php if ($isAdmin): ?>
-                <div class="mt-4 pt-4 border-t border-slate-700 text-xs text-slate-400 uppercase">
-                    Administration
+                <div class="pt-2 mt-1 border-t border-slate-700">
+                    <div class="px-2.5 py-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</div>
+                    <?php
+                    echo navLink('/admin/messages', '💬', 'Messagerie', 'messages', $section);
+                    echo navLink('/admin/users', '👥', 'Utilisateurs', 'users', $section);
+                    ?>
                 </div>
-
-                <a href="/admin/messages"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('messages', $section) ?>">
-                    💬 Messagerie
-                </a>
-
-                <a href="/admin/users"
-                   class="flex items-center gap-2 px-3 py-2 rounded <?= navClass('users', $section) ?>">
-                    👥 Utilisateurs
-                </a>
                 <?php endif; ?>
 
             </nav>
 
             <!-- User -->
             <?php if ($user): ?>
-            <div class="p-4 border-t border-slate-700 text-sm text-slate-300">
+            <div class="border-t border-slate-700 px-2 py-2 space-y-0.5">
                 <a href="/user/profile"
-                   class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150
-                          hover:bg-slate-700 hover:text-white text-slate-300">
-                    👤 Modifier mon profil
+                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-sm">
+                    👤 Mon profil
                 </a>
-                <div class="mt-2 px-3 text-xs text-slate-400">
-                    Connecté en tant que<br>
-                    <strong><?= htmlspecialchars($username) ?></strong>
+                <a href="/logout"
+                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-colors text-sm">
+                    🚪 Déconnexion
+                </a>
+                <div class="px-2.5 pt-1 pb-0.5 text-xs text-slate-500 truncate">
+                    <?= htmlspecialchars($username) ?>
                 </div>
             </div>
             <?php endif; ?>
-
-            <!-- Footer -->
-            <div class="p-3 text-xs text-slate-500 border-t border-slate-700">
+            <div class="px-3 py-1.5 text-xs text-slate-600 border-t border-slate-700">
                 © <?= date('Y') ?> Terra Aventura
             </div>
 
@@ -258,11 +243,10 @@ $quetesUrl = $isAdmin ? '/admin/quetes' : '/quetes';
 
                 <?php if ($user): ?>
                 <div class="flex gap-3 text-sm items-center">
-                    <span class="hidden sm:inline text-slate-600"><?= htmlspecialchars($username) ?></span>
+                    <span class="hidden md:inline text-slate-600"><?= htmlspecialchars($username) ?></span>
                     <a href="/logout"
-                       class="text-sm font-semibold text-red-600 hover:text-red-800 transition px-2 py-1 rounded-lg hover:bg-red-50">
-                        <span class="hidden sm:inline">Déconnexion</span>
-                        <span class="sm:hidden">🚪</span>
+                       class="hidden md:inline-flex text-sm font-semibold text-red-600 hover:text-red-800 transition px-2 py-1 rounded-lg hover:bg-red-50">
+                        Déconnexion
                     </a>
                 </div>
                 <?php endif; ?>
@@ -422,6 +406,126 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     BARRE MOBILE ADAPTATIVE — les 4 onglets les + utilisés
+     remontent automatiquement via tracking localStorage
+═══════════════════════════════════════════════════════ -->
+
+<!-- Données PHP → JS : toutes les sections disponibles -->
+<script>
+<?php
+$_taSections = [
+    ['href' => '/',             'icon' => '📊', 'label' => 'Dashboard',    'name' => 'dashboard'],
+    ['href' => '/poiz',         'icon' => '📍', 'label' => 'POIZ',         'name' => 'poiz'],
+    ['href' => '/parcours',     'icon' => '🗺️', 'label' => 'Parcours',     'name' => 'parcours'],
+    ['href' => '/zamela',       'icon' => '⚡',  'label' => 'Zaméla',       'name' => 'zamela'],
+    ['href' => '/evenement',    'icon' => '🎉', 'label' => 'Événements',   'name' => 'evenement'],
+    ['href' => '/stats',        'icon' => '📈', 'label' => 'Stats',        'name' => 'stats'],
+    ['href' => '/maintenance',  'icon' => '🛠️', 'label' => 'Maintenance',  'name' => 'maintenance'],
+    ['href' => $quetesUrl,      'icon' => '🎯', 'label' => 'Quêtes',       'name' => 'quetes'],
+];
+if ($isAdmin) {
+    $_taSections[] = ['href' => '/admin/messages', 'icon' => '💬', 'label' => 'Messages',     'name' => 'messages'];
+    $_taSections[] = ['href' => '/admin/users',    'icon' => '👥', 'label' => 'Utilisateurs', 'name' => 'users'];
+}
+?>
+window.__TA_SECTIONS__ = <?php echo json_encode($_taSections, JSON_UNESCAPED_UNICODE); ?>;
+
+window.__TA_CURRENT_SECTION__ = <?php echo json_encode($section); ?>;
+</script>
+
+<!-- Conteneur de la barre — rempli par JS -->
+<nav id="mobile-bottom-nav"
+     class="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch"
+     style="background:#1e293b;border-top:1px solid rgba(255,255,255,.08);
+            padding-bottom:env(safe-area-inset-bottom,0px);min-height:56px;">
+</nav>
+
+<style>
+@media (max-width: 767px) {
+    main.overflow-y-auto {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important;
+    }
+}
+.tap-target { min-height: 44px; }
+#mobile-bottom-nav a,
+#mobile-bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: color .15s;
+    border: none;
+    background: none;
+    cursor: pointer;
+    min-height: 56px;
+}
+#mobile-bottom-nav a:hover,
+#mobile-bottom-nav button:hover { color: #fff; }
+#mobile-bottom-nav a.active { color: #60a5fa; }
+#mobile-bottom-nav .nav-icon { font-size: 1.25rem; line-height: 1; }
+#mobile-bottom-nav .nav-label { font-size: .65rem; font-weight: 600; line-height: 1; }
+</style>
+
+<script>
+(function() {
+    var STORAGE_KEY = 'ta_nav_visits';
+    var MAX_IN_BAR  = 4; // nombre d'onglets dans la barre
+
+    // ── 1. Lire et incrémenter le compteur de visites ─────────────
+    var visits = {};
+    try { visits = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+    var current = window.__TA_CURRENT_SECTION__;
+    if (current) {
+        visits[current] = (visits[current] || 0) + 1;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(visits)); } catch(e) {}
+    }
+
+    // ── 2. Trier les sections par popularité ─────────────────────
+    var sections = window.__TA_SECTIONS__ || [];
+
+    // Dashboard toujours présent (ancre principale)
+    var pinned = sections.filter(function(s) { return s.name === 'dashboard'; });
+    var others = sections.filter(function(s) { return s.name !== 'dashboard'; });
+
+    // Trier par visites décroissantes
+    others.sort(function(a, b) {
+        return (visits[b.name] || 0) - (visits[a.name] || 0);
+    });
+
+    // Les (MAX_IN_BAR - 1) plus visités + dashboard
+    var inBar = pinned.concat(others.slice(0, MAX_IN_BAR - 1));
+
+    // ── 3. Construire la barre ────────────────────────────────────
+    var nav = document.getElementById('mobile-bottom-nav');
+    if (!nav) return;
+
+    var html = '';
+    inBar.forEach(function(s) {
+        var isActive = s.name === current;
+        html += '<a href="' + s.href + '" class="' + (isActive ? 'active' : '') + '" title="' + s.label + '">'
+              + '<span class="nav-icon">' + s.icon + '</span>'
+              + '<span class="nav-label">' + s.label + '</span>'
+              + '</a>';
+    });
+
+    // Bouton "Plus" — ouvre la sidebar
+    html += '<button type="button" onclick="toggleSidebar()" title="Plus">'
+          + '<span class="nav-icon">☰</span>'
+          + '<span class="nav-label">Plus</span>'
+          + '</button>';
+
+    nav.innerHTML = html;
+})();
 </script>
 
 </body>

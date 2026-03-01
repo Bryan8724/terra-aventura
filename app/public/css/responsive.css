@@ -209,7 +209,7 @@ main[class*="overflow-y-auto"] {
 @media (max-width: 767px) {
     #sidebar {
         position: fixed !important; top: 0 !important; left: 0 !important;
-        z-index: 50 !important; width: 260px !important;
+        z-index: 50 !important; width: 208px !important;
         transform: translateX(-100%) !important;
         transition: transform .28s cubic-bezier(.4,0,.2,1) !important;
     }
