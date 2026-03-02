@@ -44,7 +44,6 @@ class EvenementController
         $evenements = $this->evenement->getAll($userId, $filters);
 
         if ($isApi) {
-            // Récupérer les parcours de chaque événement en 1 seule requête
             $evenementIds = array_column($evenements, 'id');
 
             $parcoursParEvenement = [];
@@ -55,7 +54,6 @@ class EvenementController
                         ep.id,
                         ep.evenement_id,
                         ep.titre,
-                        ep.ville,
                         IF(epe.id IS NOT NULL, 1, 0) AS effectue
                     FROM evenement_parcours ep
                     LEFT JOIN evenement_parcours_effectues epe
