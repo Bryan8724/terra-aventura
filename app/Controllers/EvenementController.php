@@ -54,6 +54,10 @@ class EvenementController
                         ep.id,
                         ep.evenement_id,
                         ep.titre,
+                        ep.niveau,
+                        ep.terrain,
+                        ep.duree,
+                        ep.distance_km,
                         IF(epe.id IS NOT NULL, 1, 0) AS effectue
                     FROM evenement_parcours ep
                     LEFT JOIN evenement_parcours_effectues epe
