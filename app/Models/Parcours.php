@@ -35,8 +35,7 @@ class Parcours
                 po.nom  AS poiz_nom,
                 po.logo AS poiz_logo,
                 CASE WHEN pe.parcours_id IS NULL THEN 0 ELSE 1 END AS effectue,
-                pe.date_effectue,
-                pe.heure_effectue,
+                pe.date_validation AS date_effectue,
                 pe.badges_recuperes,
                 CASE WHEN pm.parcours_id IS NULL THEN 0 ELSE 1 END AS en_maintenance
             FROM parcours p
