@@ -3,7 +3,8 @@
 namespace Controllers;
 
 use Core\Auth;
-use Core\Toast;
+use Core\ApiAuth;
+use Core\Response;
 use Core\Database;
 use PDO;
 
@@ -18,6 +19,23 @@ class StatsController
 
     public function index(): void
     {
+        $uri   = $_SERVER['REQUEST_URI'] ?? '';
+        $path  = parse_url($uri, PHP_URL_PATH) ?? '';
+        $isApi = str_starts_with($path, '/api/');
+
+        if ($isApi) {
+            $user   = ApiAuth::requireAuth();
+            $userId = (int)$user['id'];
+
+            $myStats = $this->buildStats($userId);
+
+            Response::json([
+                'success' => true,
+                'data'    => $myStats,
+            ]);
+            return;
+        }
+
         Auth::check();
         $userId    = (int)$_SESSION['user']['id'];
         $compareId = (int)($_GET['compare'] ?? 0);
@@ -35,7 +53,6 @@ class StatsController
             }
         }
 
-        // Liste des utilisateurs pour la comparaison (sauf soi-même)
         $stmt = $this->db->prepare(
             "SELECT id, username FROM users WHERE status = 'active' AND id != ? ORDER BY username ASC"
         );
@@ -50,14 +67,10 @@ class StatsController
         require VIEW_PATH . '/partials/layout.php';
     }
 
-    /* =========================================================
-       CONSTRUCTION DES STATS
-    ========================================================= */
     private function buildStats(int $userId): array
     {
         $s = [];
 
-        // ── Parcours permanents ──────────────────────────────
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM parcours_effectues pe
             JOIN parcours p ON p.id = pe.parcours_id
@@ -70,10 +83,8 @@ class StatsController
         $stmt->execute();
         $s['parcours_total'] = (int)$stmt->fetchColumn();
 
-        // ── Classement par POIZ ──────────────────────────────
         $stmt = $this->db->prepare("
             SELECT po.nom AS poiz_nom,
-                   po.logo AS poiz_logo,
                    COUNT(pe.id) AS nb_effectues,
                    (SELECT COUNT(*) FROM parcours p2 WHERE p2.poiz_id = po.id AND p2.poiz_id != 32) AS nb_total
             FROM poiz po
@@ -87,7 +98,6 @@ class StatsController
         $stmt->execute([$userId]);
         $s['par_poiz'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // ── Zaméla ────────────────────────────────────────────
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM parcours_effectues pe
             JOIN parcours p ON p.id = pe.parcours_id
@@ -99,20 +109,13 @@ class StatsController
         $stmt = $this->db->query("SELECT COUNT(*) FROM parcours WHERE poiz_id = 32");
         $s['zamela_total'] = (int)$stmt->fetchColumn();
 
-        // ── Événements ────────────────────────────────────────
         try {
-            $stmt = $this->db->prepare(
-                "SELECT COUNT(*) FROM evenement_effectues WHERE user_id = ?"
-            );
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM evenement_effectues WHERE user_id = ?");
             $stmt->execute([$userId]);
             $s['evenements_effectues'] = (int)$stmt->fetchColumn();
-
             $s['evenements_total'] = (int)$this->db->query("SELECT COUNT(*) FROM evenements")->fetchColumn();
 
-            // ── Parcours d'événements ─────────────────────────────
-            $stmt = $this->db->prepare(
-                "SELECT COUNT(*) FROM evenement_parcours_effectues WHERE user_id = ?"
-            );
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM evenement_parcours_effectues WHERE user_id = ?");
             $stmt->execute([$userId]);
             $s['ep_effectues'] = (int)$stmt->fetchColumn();
         } catch (\Exception $e) {
@@ -121,7 +124,6 @@ class StatsController
             $s['ep_effectues']         = 0;
         }
 
-        // ── Distance totale ───────────────────────────────────
         $stmt = $this->db->prepare("
             SELECT COALESCE(SUM(p.distance_km), 0)
             FROM parcours_effectues pe
@@ -131,14 +133,12 @@ class StatsController
         $stmt->execute([$userId]);
         $s['distance_km'] = (float)$stmt->fetchColumn();
 
-        // ── Badges ────────────────────────────────────────────
         $stmt = $this->db->prepare(
             "SELECT COALESCE(SUM(badges_recuperes), 0) FROM parcours_effectues WHERE user_id = ?"
         );
         $stmt->execute([$userId]);
         $s['badges'] = (int)$stmt->fetchColumn();
 
-        // ── Premier / dernier parcours ────────────────────────
         $stmt = $this->db->prepare("
             SELECT MIN(date_validation) AS premier, MAX(date_validation) AS dernier
             FROM parcours_effectues WHERE user_id = ?
@@ -148,7 +148,6 @@ class StatsController
         $s['premier_parcours'] = $dates['premier'];
         $s['dernier_parcours'] = $dates['dernier'];
 
-        // ── Département favori ────────────────────────────────
         $stmt = $this->db->prepare("
             SELECT p.departement_code, p.departement_nom, COUNT(*) AS nb
             FROM parcours_effectues pe
@@ -161,7 +160,6 @@ class StatsController
         $stmt->execute([$userId]);
         $s['dept_favori'] = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-        // ── Niveau moyen des parcours effectués ───────────────
         $stmt = $this->db->prepare("
             SELECT ROUND(AVG(p.niveau), 1)
             FROM parcours_effectues pe
@@ -171,9 +169,8 @@ class StatsController
         $stmt->execute([$userId]);
         $s['niveau_moyen'] = (float)$stmt->fetchColumn();
 
-        // ── Parcours récents (5 derniers) ─────────────────────
         $stmt = $this->db->prepare("
-            SELECT p.titre, p.ville, p.departement_code, po.nom AS poiz_nom, po.logo AS poiz_logo,
+            SELECT p.titre, p.ville, p.departement_code, po.nom AS poiz_nom,
                    pe.date_validation
             FROM parcours_effectues pe
             JOIN parcours p ON p.id = pe.parcours_id
@@ -185,7 +182,6 @@ class StatsController
         $stmt->execute([$userId]);
         $s['recents'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // ── Score global (progression toutes catégories) ──────
         $totalItems = $s['parcours_total'] + $s['zamela_total'] + $s['evenements_total'];
         $doneItems  = $s['parcours_effectues'] + $s['zamela_effectues'] + $s['evenements_effectues'];
         $s['score_global'] = $totalItems > 0 ? round($doneItems / $totalItems * 100) : 0;
