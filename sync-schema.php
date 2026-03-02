@@ -248,13 +248,72 @@ if ($indexAdded === 0) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  ÉTAPE 4 : AUTO_INCREMENT manquant sur colonnes id
+//  Compare EXTRA de chaque colonne dev vs prod et corrige
+// ══════════════════════════════════════════════════════════
+echo "\n[sync-schema] ── Étape 4 : Vérification AUTO_INCREMENT ──\n";
+
+$autoFixed = 0;
+foreach ($devTables as $table) {
+    if (!isset($prodTablesIndex[$table])) continue;
+
+    $devCols  = getColumns($dev,  $devDb,  $table);
+    $prodCols = getColumns($prod, $prodDb, $table);
+
+    $prodColMap = [];
+    foreach ($prodCols as $col) {
+        $prodColMap[$col['COLUMN_NAME']] = $col;
+    }
+
+    foreach ($devCols as $col) {
+        $colName  = $col['COLUMN_NAME'];
+        $devExtra = strtolower($col['EXTRA'] ?? '');
+
+        // Seule correction : AUTO_INCREMENT manquant en prod
+        if (!str_contains($devExtra, 'auto_increment')) continue;
+
+        $prodCol      = $prodColMap[$colName] ?? null;
+        if (!$prodCol) continue;
+        $prodExtra    = strtolower($prodCol['EXTRA'] ?? '');
+        if (str_contains($prodExtra, 'auto_increment')) continue;
+
+        // La colonne doit être PRIMARY KEY pour accepter AUTO_INCREMENT
+        $type     = $col['COLUMN_TYPE'];
+        $nullable = 'NOT NULL';
+        $fixSql   = "ALTER TABLE `$table` MODIFY `$colName` $type $nullable AUTO_INCREMENT PRIMARY KEY";
+
+        echo "[sync-schema] ➕ AUTO_INCREMENT manquant : $table.$colName → correction...\n";
+        try {
+            $prod->exec($fixSql);
+            echo "[sync-schema] ✅  $table.$colName corrigé (AUTO_INCREMENT + PRIMARY KEY)\n";
+            $autoFixed++;
+        } catch (PDOException $e) {
+            // Peut échouer si PRIMARY KEY déjà défini ailleurs — on essaie sans
+            $fixSql2 = "ALTER TABLE `$table` MODIFY `$colName` $type $nullable AUTO_INCREMENT";
+            try {
+                $prod->exec($fixSql2);
+                echo "[sync-schema] ✅  $table.$colName corrigé (AUTO_INCREMENT)\n";
+                $autoFixed++;
+            } catch (PDOException $e2) {
+                echo "[sync-schema] ⚠️  Impossible de corriger $table.$colName : " . $e2->getMessage() . "\n";
+            }
+        }
+    }
+}
+
+if ($autoFixed === 0) {
+    echo "[sync-schema] Aucun AUTO_INCREMENT manquant.\n";
+}
+
+// ══════════════════════════════════════════════════════════
 //  RÉSUMÉ
 // ══════════════════════════════════════════════════════════
 echo "\n[sync-schema] ══════════════════════════════════════\n";
 echo "[sync-schema] Synchronisation terminée :\n";
-echo "[sync-schema]   Tables créées  : $created\n";
-echo "[sync-schema]   Colonnes ajout : $altered\n";
-echo "[sync-schema]   Index ajoutés  : $indexAdded\n";
+echo "[sync-schema]   Tables créées       : $created\n";
+echo "[sync-schema]   Colonnes ajoutées   : $altered\n";
+echo "[sync-schema]   Index ajoutés       : $indexAdded\n";
+echo "[sync-schema]   AUTO_INCREMENT fixés: $autoFixed\n";
 echo "[sync-schema] Les données prod sont intactes.\n";
 echo "[sync-schema] ══════════════════════════════════════\n";
 
