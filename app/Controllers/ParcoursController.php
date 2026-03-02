@@ -75,7 +75,8 @@ class ParcoursController
                 'success'    => true,
                 'data'       => $parcours,
                 'page'       => $page,
-                'totalPages' => $totalPages
+                'totalPages' => $totalPages,
+                'total'      => $total,
             ]);
         }
 

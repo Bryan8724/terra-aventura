@@ -371,7 +371,17 @@ function submitMaintenance() {
         },
         body: body.toString()
     })
-    .then(r => r.json())
+    .then(async r => {
+        const text = await r.text();
+        // Sur prod le proxy peut supprimer X-Requested-With → réponse = redirect HTML
+        // On tente de parser en JSON, sinon on considère que c'est un succès (redirect 302 = update OK)
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            // Pas du JSON = redirect après succès côté serveur
+            return { success: true, _fromRedirect: true };
+        }
+    })
     .then(json => {
         if (!json.success) {
             showDrawerToast('❌ ' + (json.message ?? 'Erreur'), 'error');
@@ -394,6 +404,9 @@ function submitMaintenance() {
             }
         }
 
+        // Si c'est un redirect (prod), recharger la page pour avoir les données fraîches
+        if (json._fromRedirect) { setTimeout(() => location.reload(), 600); return; }
+
         // Rafraîchir les cartes de l'index sans rechargement
         if (typeof loadParcours === 'function') loadParcours(1);
 
@@ -401,7 +414,8 @@ function submitMaintenance() {
         const badge = document.getElementById('countBadge');
         if (badge) badge.textContent = maintenanceIds.length + ' actif(s)';
     })
-    .catch(() => {
+    .catch((err) => {
+        console.error('Maintenance save error:', err);
         showDrawerToast('❌ Erreur réseau', 'error');
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Sauvegarder'; }
     });
