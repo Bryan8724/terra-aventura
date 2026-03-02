@@ -47,6 +47,15 @@ class EvenementController
         $evenements = $this->evenement->getAll($userId, $filters);
 
         if ($isApi) {
+            // Enrichir chaque événement avec ses parcours détaillés
+            foreach ($evenements as &$evt) {
+                $detail = $this->evenement->findForUser((int)$evt['id'], $userId);
+                $evt['parcours'] = $detail['parcours'] ?? [];
+                // date_effectue normalisé
+                $evt['date_effectue'] = $evt['date_participation'] ?? null;
+            }
+            unset($evt);
+
             Response::json(['success' => true, 'data' => $evenements]);
         }
 
@@ -105,7 +114,6 @@ class EvenementController
             'image'            => $imagePath,
         ]);
 
-        // Parcours associés envoyés en JSON
         $parcoursJson = trim($_POST['parcours_json'] ?? '[]');
         $parcoursList = json_decode($parcoursJson, true) ?: [];
         foreach ($parcoursList as $p) {
@@ -126,7 +134,7 @@ class EvenementController
     {
         AdminMiddleware::handle();
 
-        $id = (int)($_GET['id'] ?? 0);
+        $id  = (int)($_GET['id'] ?? 0);
         $evt = $this->evenement->find($id);
 
         if (!$evt) {
@@ -178,14 +186,11 @@ class EvenementController
             'image'            => $imagePath,
         ]);
 
-        // Gérer les parcours : supprimer les supprimés, ajouter/update les autres
         $parcoursJson = trim($_POST['parcours_json'] ?? '[]');
         $parcoursList = json_decode($parcoursJson, true) ?: [];
 
-        // IDs existants à garder
         $keepIds = array_filter(array_column($parcoursList, 'id'));
 
-        // Supprimer ceux qui ne sont plus dans la liste
         if (!empty($keepIds)) {
             $in = implode(',', array_map('intval', $keepIds));
             $this->db->exec("DELETE FROM evenement_parcours WHERE evenement_id = $id AND id NOT IN ($in)");
@@ -234,21 +239,34 @@ class EvenementController
     ========================================================= */
     public function valider(): void
     {
-        Auth::check();
-        $user = $_SESSION['user'];
+        $isApi = $this->isApi();
+
+        if ($isApi) {
+            $user = ApiAuth::requireAuth();
+        } else {
+            Auth::check();
+            $user = $_SESSION['user'];
+        }
 
         if (($user['role'] ?? '') === 'admin') {
+            if ($isApi) {
+                Response::json(['success' => false, 'message' => 'Les administrateurs ne peuvent pas valider un événement'], 403);
+            }
             Toast::add('error', 'Les administrateurs ne peuvent pas valider un événement');
             header('Location: /evenement');
             exit;
         }
 
-        $evenementId = (int)($_POST['evenement_id'] ?? 0);
+        $evenementId = (int)($_POST['evenement_id'] ?? $_POST['id'] ?? 0);
         $this->evenement->validerEvenement(
             (int)$user['id'],
             $evenementId,
             $_POST['date'] ?? null
         );
+
+        if ($isApi) {
+            Response::json(['success' => true, 'message' => 'Participation validée !']);
+        }
 
         Toast::add('success', 'Participation validée !');
         header('Location: /evenement');
@@ -272,7 +290,7 @@ class EvenementController
     }
 
     /* =========================================================
-       DÉTAIL ÉVÉNEMENT (page parcours internes)
+       DÉTAIL ÉVÉNEMENT
     ========================================================= */
     public function detail(): void
     {
@@ -303,16 +321,25 @@ class EvenementController
     ========================================================= */
     public function validerParcours(): void
     {
-        Auth::check();
-        $user = $_SESSION['user'];
+        $isApi = $this->isApi();
+
+        if ($isApi) {
+            $user = ApiAuth::requireAuth();
+        } else {
+            Auth::check();
+            $user = $_SESSION['user'];
+        }
 
         if (($user['role'] ?? '') === 'admin') {
+            if ($isApi) {
+                Response::json(['success' => false, 'message' => 'Un administrateur ne peut pas valider un parcours'], 403);
+            }
             Toast::add('error', 'Un administrateur ne peut pas valider un parcours');
             header('Location: /evenement');
             exit;
         }
 
-        $epId        = (int)($_POST['ep_id'] ?? 0);
+        $epId        = (int)($_POST['ep_id'] ?? $_POST['id'] ?? 0);
         $evenementId = (int)($_POST['evenement_id'] ?? 0);
 
         $this->evenement->validerParcours(
@@ -320,6 +347,10 @@ class EvenementController
             $epId,
             $_POST['date'] ?? null
         );
+
+        if ($isApi) {
+            Response::json(['success' => true, 'message' => 'Parcours validé !']);
+        }
 
         Toast::add('success', 'Parcours validé !');
         header('Location: /evenement/detail?id=' . $evenementId);
