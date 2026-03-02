@@ -29,9 +29,33 @@ class StatsController
 
             $myStats = $this->buildStats($userId);
 
+            // Comparaison optionnelle : /api/stats?compare=<userId>
+            $compareId    = (int)($_GET['compare'] ?? 0);
+            $compareStats = null;
+            $compareUser  = null;
+
+            if ($compareId > 0 && $compareId !== $userId) {
+                $stmt = $this->db->prepare("SELECT id, username FROM users WHERE id = ? AND status = 'active'");
+                $stmt->execute([$compareId]);
+                $compareUser = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($compareUser) {
+                    $compareStats = $this->buildStats($compareId);
+                }
+            }
+
+            // Liste des autres utilisateurs pour le sélecteur
+            $stmt = $this->db->prepare(
+                "SELECT id, username FROM users WHERE status = 'active' AND id != ? ORDER BY username ASC"
+            );
+            $stmt->execute([$userId]);
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
             Response::json([
-                'success' => true,
-                'data'    => $myStats,
+                'success'       => true,
+                'data'          => $myStats,
+                'users'         => $users,
+                'compare_user'  => $compareUser,
+                'compare_stats' => $compareStats,
             ]);
             return;
         }
