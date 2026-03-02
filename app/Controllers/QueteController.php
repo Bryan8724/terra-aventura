@@ -160,7 +160,7 @@ class QueteController
     ========================================================= */
     public function confirmerObjet(): void
     {
-        $user   = ApiAuth::requireAuth();
+        $user = $this->requireUser();
         $userId = (int)$user['id'];
         $objetId = (int)($_POST['quete_objet_id'] ?? 0);
 
@@ -216,7 +216,7 @@ class QueteController
     ========================================================= */
     public function ajouterParcoursFinale(): void
     {
-        $user    = ApiAuth::requireAuth();
+        $user    = $this->requireUser();
         $userId  = (int)$user['id'];
         $queteId = (int)($_POST['quete_id'] ?? 0);
         $titre   = trim($_POST['titre'] ?? '');
@@ -286,7 +286,7 @@ class QueteController
     ========================================================= */
     public function supprimerParcoursFinal(): void
     {
-        $user   = ApiAuth::requireAuth();
+        $user   = $this->requireUser();
         $userId = (int)$user['id'];
         $id     = (int)($_POST['parcours_final_id'] ?? 0);
 
@@ -300,6 +300,19 @@ class QueteController
     /* =========================================================
        Helpers
     ========================================================= */
+    /* =========================================================
+       Helper : authentification web (session) ou API (token)
+    ========================================================= */
+    private function requireUser(): array
+    {
+        $isApi = str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/api/');
+        if ($isApi) {
+            return ApiAuth::requireAuth();
+        }
+        Auth::check();
+        return $_SESSION['user'];
+    }
+
     private function getParcoursFinaux(int $userId): array
     {
         $stmt = $this->db->prepare("
