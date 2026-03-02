@@ -253,6 +253,22 @@ $router->post('/api/evenement/valider-parcours', ['EvenementController', 'valide
 
 $router->get('/api/stats', ['StatsController', 'index']);
 
+// ── API ADMIN MOBILE ──────────────────────────────────────────
+$router->get('/api/admin/refs',                   ['AdminApiController', 'refs']);
+$router->get('/api/admin/parcours/get',           ['AdminApiController', 'getParcours']);
+$router->post('/api/admin/parcours/store',        ['AdminApiController', 'storeParcours']);
+$router->post('/api/admin/parcours/update',       ['AdminApiController', 'updateParcours']);
+$router->get('/api/admin/zamela/get',             ['AdminApiController', 'getParcours']);
+$router->post('/api/admin/zamela/store',          ['AdminApiController', 'storeZamela']);
+$router->post('/api/admin/zamela/update',         ['AdminApiController', 'updateZamela']);
+$router->get('/api/admin/evenement/get',          ['AdminApiController', 'getEvenement']);
+$router->post('/api/admin/evenement/store',       ['AdminApiController', 'storeEvenement']);
+$router->post('/api/admin/evenement/update',      ['AdminApiController', 'updateEvenement']);
+$router->get('/api/admin/quetes/get',             ['AdminApiController', 'getQuete']);
+$router->post('/api/admin/quetes/store',          ['AdminApiController', 'storeQuete']);
+$router->post('/api/admin/quetes/update',         ['AdminApiController', 'updateQuete']);
+$router->get('/api/admin/parcours/search',        ['AdminApiController', 'searchParcours']);
+
 $router->get('/api/user/profile', ['UserController', 'editProfile']);
 $router->post('/api/user/update-profile', ['UserUpdateProfileController', 'index']);
 
