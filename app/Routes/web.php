@@ -236,6 +236,10 @@ $router->post('/api/parcours/valider', ['ParcoursController', 'valider']);
 $router->post('/api/parcours/reset', ['ParcoursController', 'reset']);
 
 $router->get('/api/quetes', ['QueteController', 'index']);
+$router->post('/api/quetes/confirmer-objet',          ['QueteController', 'confirmerObjet']);
+$router->post('/api/quetes/parcours-final/ajouter',   ['QueteController', 'ajouterParcoursFinale']);
+$router->post('/api/quetes/parcours-final/valider',   ['QueteController', 'validerParcoursFinal']);
+$router->post('/api/quetes/parcours-final/supprimer', ['QueteController', 'supprimerParcoursFinal']);
 
 $router->get('/api/zamela', ['ZamelaController', 'index']);
 
