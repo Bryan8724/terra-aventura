@@ -347,6 +347,19 @@ $globalPct = $stats['objets_total'] > 0
         $nbEffectues  = count(array_filter($objet['parcours'] ?? [], fn($p) => !empty($p['effectue'])));
     ?>
 
+    <?php if ($peutConfirmer): ?>
+    <div class="flex items-center justify-between gap-3 px-3 py-2.5 bg-amber-50 border border-amber-300 rounded-xl mb-1">
+        <p class="text-xs text-amber-800 font-medium">
+            🎒 <strong><?= htmlspecialchars((string)($objet['nom'] ?? '')) ?></strong> — un parcours validé, confirmez-vous avoir obtenu cet objet ?
+        </p>
+        <button type="button"
+                class="btn-confirm-objet flex-shrink-0"
+                onclick="confirmerObjet(<?= $oid ?>, '<?= htmlspecialchars((string)$objet['nom'], ENT_QUOTES) ?>', <?= $qid ?>)">
+            ✔ J'ai obtenu cet objet !
+        </button>
+    </div>
+    <?php endif; ?>
+
     <div class="objet-panel <?= $panelClass ?>" id="panel-<?= $oid ?>">
 
         <button type="button"
@@ -358,21 +371,12 @@ $globalPct = $stats['objets_total'] > 0
             <span class="chevron">▶</span>
 
             <span class="flex-1 text-sm font-semibold text-slate-700 truncate">
-                <?= $obtenu ? '✅' : ($peutConfirmer ? '🎒' : '🎒') ?>
+                <?= $obtenu ? '✅' : '🎒' ?>
                 <?= htmlspecialchars((string)($objet['nom'] ?? '')) ?>
             </span>
 
-            <!-- Badge statut -->
             <?php if ($obtenu): ?>
                 <span class="badge badge-done mr-1">✔ Confirmé</span>
-            <?php elseif ($peutConfirmer): ?>
-                <!-- Bouton confirmation explicite -->
-                <button type="button"
-                        class="btn-confirm-objet"
-                        onclick="event.stopPropagation(); confirmerObjet(<?= $oid ?>, '<?= htmlspecialchars((string)$objet['nom'], ENT_QUOTES) ?>', <?= $qid ?>)"
-                        title="Vous avez validé un parcours lié à cet objet, confirmez-vous l'avoir obtenu ?">
-                    🎒 J'ai obtenu cet objet !
-                </button>
             <?php else: ?>
                 <span class="badge badge-wip mr-1">⏳ En cours</span>
             <?php endif; ?>
@@ -535,6 +539,20 @@ $globalPct = $stats['objets_total'] > 0
 </div>
 
 <script>
+// ── Helper fetch (session web, pas de Bearer token nécessaire) ──────
+async function qFetch(url, body = null) {
+    const opts = { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } };
+    if (body) opts.body = new URLSearchParams(body).toString();
+    const res  = await fetch(url, opts);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Erreur serveur');
+    return data;
+}
+
+function qAlert(msg, type = 'success') {
+    taAlert(msg, { icon: type === 'success' ? '✅' : '❌', type });
+}
+
 // ── Accordéon objet ────────────────────────────────────────────────
 function toggleObjet(id) {
     const btn  = document.querySelector('[aria-controls="body-' + id + '"]');
@@ -563,8 +581,8 @@ function toggleFinal(qid) {
     const chevron = document.getElementById('final-chevron-' + qid);
     if (!body) return;
     const open = body.style.display !== 'none';
-    body.style.display    = open ? 'none' : 'block';
-    chevron.textContent   = open ? '▼' : '▲';
+    body.style.display  = open ? 'none' : 'block';
+    chevron.textContent = open ? '▼' : '▲';
 }
 
 function togglePfForm(qid) {
@@ -585,25 +603,28 @@ function confirmerObjet(objetId, objetNom, queteId) {
 
 function closeModalObjet() {
     document.getElementById('modal-confirm-objet').classList.add('hidden');
+    const btn = document.getElementById('modal-objet-confirm-btn');
+    btn.disabled = false;
+    btn.textContent = '✔ Oui, obtenu !';
     _pendingObjetId = null;
 }
 
 document.getElementById('modal-objet-confirm-btn').addEventListener('click', async function () {
     if (!_pendingObjetId) return;
-    this.disabled = true;
-    this.textContent = '⏳ En cours…';
+    this.disabled    = true;
+    this.textContent = '⏳ Confirmation…';
     try {
-        const res = await taFetch('/api/quetes/confirmer-objet', 'POST', { quete_objet_id: _pendingObjetId });
+        const res = await qFetch('/quetes/confirmer-objet', { quete_objet_id: _pendingObjetId });
         closeModalObjet();
         if (res.quete_debloquee) {
-            taToast('success', '🔓 Quête débloquée ! Renseignez le parcours final.');
+            await taAlert('🔓 Quête débloquée ! Vous pouvez maintenant renseigner le parcours final.', { icon: '🔓', type: 'success' });
         } else {
-            taToast('success', 'Objet confirmé !');
+            await taAlert('Objet confirmé avec succès !', { icon: '✅', type: 'success' });
         }
-        setTimeout(() => location.reload(), 900);
+        location.reload();
     } catch (e) {
-        taToast('error', e.message || 'Erreur lors de la confirmation.');
-        this.disabled = false;
+        await taAlert(e.message || 'Erreur lors de la confirmation.', { icon: '❌', type: 'error' });
+        this.disabled    = false;
         this.textContent = '✔ Oui, obtenu !';
     }
 });
@@ -613,24 +634,22 @@ async function ajouterParcoursFinal(qid) {
     const titre = document.getElementById('pf-titre-' + qid)?.value?.trim();
     const ville = document.getElementById('pf-ville-' + qid)?.value?.trim();
     const km    = document.getElementById('pf-km-' + qid)?.value?.trim();
-    if (!titre) { taToast('error', 'Le titre est obligatoire.'); return; }
+    if (!titre) { await taAlert('Le titre est obligatoire.', { icon: '⚠️', type: 'warning' }); return; }
     try {
-        await taFetch('/api/quetes/parcours-final/ajouter', 'POST', { quete_id: qid, titre, ville, distance_km: km });
-        taToast('success', 'Parcours final ajouté !');
-        setTimeout(() => location.reload(), 800);
-    } catch (e) { taToast('error', e.message || 'Erreur.'); }
+        await qFetch('/quetes/parcours-final/ajouter', { quete_id: qid, titre, ville, distance_km: km });
+        location.reload();
+    } catch (e) { await taAlert(e.message || 'Erreur.', { icon: '❌', type: 'error' }); }
 }
 
 // ── Parcours final : valider ────────────────────────────────────────
 async function validerParcoursFinal(pfId, btn) {
-    const ok = await taConfirm('Valider ce parcours final ?');
+    const ok = await taConfirm('Valider ce parcours final ?', { icon: '🏁', okLabel: 'Valider', okColor: '#16a34a' });
     if (!ok) return;
     btn.disabled = true;
     try {
-        await taFetch('/api/quetes/parcours-final/valider', 'POST', { parcours_final_id: pfId });
-        taToast('success', 'Parcours final validé !');
-        setTimeout(() => location.reload(), 800);
-    } catch (e) { taToast('error', e.message || 'Erreur.'); btn.disabled = false; }
+        await qFetch('/quetes/parcours-final/valider', { parcours_final_id: pfId });
+        location.reload();
+    } catch (e) { await taAlert(e.message || 'Erreur.', { icon: '❌', type: 'error' }); btn.disabled = false; }
 }
 
 // ── Parcours final : supprimer ──────────────────────────────────────
@@ -639,23 +658,9 @@ async function supprimerParcoursFinal(pfId, btn) {
     if (!ok) return;
     btn.disabled = true;
     try {
-        await taFetch('/api/quetes/parcours-final/supprimer', 'POST', { parcours_final_id: pfId });
-        taToast('success', 'Supprimé.');
-        setTimeout(() => location.reload(), 700);
-    } catch (e) { taToast('error', e.message || 'Erreur.'); btn.disabled = false; }
-}
-
-// ── Helper fetch JSON (utilise le token de session via cookie) ──────
-async function taFetch(url, method = 'GET', body = null) {
-    const opts = { method, headers: {} };
-    if (body) {
-        opts.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-        opts.body = new URLSearchParams(body).toString();
-    }
-    const res  = await fetch(url, opts);
-    const data = await res.json();
-    if (!data.success) throw new Error(data.message || 'Erreur serveur');
-    return data;
+        await qFetch('/quetes/parcours-final/supprimer', { parcours_final_id: pfId });
+        location.reload();
+    } catch (e) { await taAlert(e.message || 'Erreur.', { icon: '❌', type: 'error' }); btn.disabled = false; }
 }
 
 // ── Suppression quête (admin) ───────────────────────────────────────
@@ -667,8 +672,7 @@ document.addEventListener('click', async function(e) {
     });
     if (!ok) return;
     const form = document.createElement('form');
-    form.method = 'post';
-    form.action = '/admin/quetes/delete';
+    form.method = 'post'; form.action = '/admin/quetes/delete';
     const inp = document.createElement('input');
     inp.type = 'hidden'; inp.name = 'id'; inp.value = btn.dataset.deleteQuete;
     form.appendChild(inp);

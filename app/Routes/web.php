@@ -85,6 +85,10 @@ $router->get('/parcours/effectue', ['ParcoursController', 'effectue']); // ✅ F
 */
 
 $router->get('/quetes', ['QueteController', 'index']);
+$router->post('/quetes/confirmer-objet',          ['QueteController', 'confirmerObjet']);
+$router->post('/quetes/parcours-final/ajouter',   ['QueteController', 'ajouterParcoursFinale']);
+$router->post('/quetes/parcours-final/valider',   ['QueteController', 'validerParcoursFinal']);
+$router->post('/quetes/parcours-final/supprimer', ['QueteController', 'supprimerParcoursFinal']);
 
 
 /*

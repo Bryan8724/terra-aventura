@@ -14,7 +14,7 @@ class QueteController
     private Quete $quete;
     private PDO   $db;
 
-    public function __construct(private PDO $dbIn = null)
+    public function __construct(private ?PDO $dbIn = null)
     {
         $this->db    = $dbIn ?? Database::getInstance();
         $this->quete = new Quete($this->db);
@@ -305,10 +305,13 @@ class QueteController
     ========================================================= */
     private function requireUser(): array
     {
-        $isApi = str_starts_with(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/api/');
-        if ($isApi) {
-            return ApiAuth::requireAuth();
+        // Essaie d'abord le token Bearer (app mobile)
+        $user = ApiAuth::userFromToken();
+        if ($user) {
+            return $user;
         }
+
+        // Fallback : session web
         Auth::check();
         return $_SESSION['user'];
     }
