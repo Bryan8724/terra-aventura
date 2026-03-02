@@ -8,7 +8,6 @@ use Core\Response;
 use Core\Database;
 use Models\Parcours;
 use Models\Evenement;
-use Models\Quete;
 
 /**
  * AdminApiController — toutes les opérations CRUD admin pour l'app mobile
@@ -17,16 +16,14 @@ use Models\Quete;
 class AdminApiController
 {
     private PDO      $db;
-    private Parcours $parcours;
+    private Parcours  $parcours;
     private Evenement $evenement;
-    private Quete    $quete;
 
     public function __construct(?PDO $db = null)
     {
         $this->db        = $db ?? Database::getInstance();
         $this->parcours  = new Parcours($this->db);
         $this->evenement = new Evenement($this->db);
-        $this->quete     = new Quete($this->db);
     }
 
     /* =========================================================
